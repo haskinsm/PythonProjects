@@ -4,10 +4,15 @@ Created on Thu Mar 18 12:54:53 2021
 
 @author: micha
 """
+# !git remote add origin https://github.com/haskinsm/PythonProjects.git
+
 
 # !git add "addition.py"
 # !git commit -m "2nd Commit"
 # !git push origin main
+
+# Forced:  !git push -f origin main
+
 # !git branch
 
 # !git fetch origin master
