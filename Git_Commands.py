@@ -7,7 +7,7 @@ Created on Thu Mar 18 12:54:53 2021
 # !git remote add origin https://github.com/haskinsm/PythonProjects.git
 
 
-# !git add "addition.py"
+# !git add "addition.py" or !git add "scripts"
 # !git commit -m "2nd Commit"
 # !git push origin main
 
