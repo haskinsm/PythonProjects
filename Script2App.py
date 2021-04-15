@@ -52,6 +52,7 @@ external_stylesheets = [
 # the head tag of the application
 
 app = dash.Dash(__name__, external_stylesheets = external_stylesheets) ## creates instance of the dash class
+server = app.server 
 app.title = "Homelessness Dashboard" ## This is the text that will appear in the title bar of your web browser 
 
 # Define the layout of the dash application
