@@ -80,7 +80,7 @@ else:
 import pandas as pd
 import json
 from pandas.io.json import json_normalize
-import jsonstat   ## Requires: pip install jsonstat.py  (Do this in anaconda powershell (might be different for non-windows OS))
+import jsonstat   ## Requires: pip install jsonstat.py  (Do this in anaconda powershell (might be different for non-windows OS)) *********************
 import sys ## For sys.exit()
 
 df = [] ## initialize dataframe
@@ -116,6 +116,7 @@ if(validPath == True):
     ######################## Descriptive statistics on the dataset
     ## As dataset can be anything there is very little descriptive statistics that can be provided.
     import numpy as np
+    print("\nDescriptive Statistics: ")
     
     ## count of observations (rows) and variables (columns)
     numRows = df.shape[0]
@@ -137,6 +138,9 @@ if(validPath == True):
     numNumericCols = np.count_nonzero( is_number(df.dtypes) == True)
     numNonNumericCols = np.count_nonzero( is_number(df.dtypes) == False)
     print("There are", numNumericCols, "numeric columns and", numNonNumericCols, "non-numeric columns.")
+    
+    ## Now will display the first 5 rows of the dataset
+    print("\nThe first 5 rows of the dataset: \n", df.head())
     
     
     
