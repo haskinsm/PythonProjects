@@ -4,7 +4,6 @@ Created on Fri Apr 16 18:36:19 2021
 
 @author: micha
 """
-
 ## When you run the program search http://127.0.0.1:8050/ and the 
 #  interactive dashboard should be visible and working
 
@@ -17,21 +16,29 @@ from dash.dependencies import Output, Input
 import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+import branca.colormap as cm
+import folium
+import geopandas as gpd
+
 
 ## Read in the 3 datasets. 
 datasetJan20 = pd.read_csv("Homelessness Report January 2020.csv")
 datasetJune20 = pd.read_csv("Homelessness Report June 2020.csv")
+
 datasetDec20 = pd.read_csv("Homelessness Report December 2020.csv")
 
 ### Now add a date column to each dataset
+datasetJan20['date'] = "January"
 # Date must be formatted in format YYYY-MM-DD in plotly
-datasetJan20['date'] = pd.to_datetime("2020-01-01", format='%Y-%m-%d')
+#datasetJan20['date'] = pd.to_datetime("2020-01-01", format='%Y-%m-%d')
 #datasetJan20['date'] = datasetJan20['date'].dt.date ## Removes the end of the timestamp leaving just the date YYYY-mm-dd
 
-datasetJune20['date'] = pd.to_datetime("2020-06-01", format='%Y-%m-%d')
+datasetJune20['date'] = "June"
+#datasetJune20['date'] = pd.to_datetime("2020-06-01", format='%Y-%m-%d')
 #datasetJune20['date'] = datasetJune20['date'].dt.date
 
-datasetDec20['date'] = pd.to_datetime("2020-12-01", format='%Y-%m-%d')
+datasetDec20['date'] = "December"
+#datasetDec20['date'] = pd.to_datetime("2020-12-01", format='%Y-%m-%d')
 #datasetDec20['date'] = datasetDec20['date'].dt.date
 
 ### I will now merge the datasets
@@ -42,6 +49,9 @@ df = datasetJan20.append(datasetJune20.append(datasetDec20))
 cols = df.columns.tolist()
 cols = cols[-1:] + cols[:-1]
 df = df[cols]
+
+
+#countries = gpd.read_file('python/Countries_WGS84.shp') # Part of my attempt to make a heatmap of Ireland
 
 
 ## Now begin creating a Dash Dashboard by Plotly
@@ -78,9 +88,15 @@ app.layout = html.Div(
             ],
             className="header",
         ),
+        # First 2 Filters:
+        # (When the user uses these filters the graphs that can be filtered by this data will be changed,
+        #  code for this is in an update function near the end of the script.)
+        # Note: Had to be very careful with filters as for example it is not possible to know how many 
+        # females from Dublin accessed private emergency accomodation
         html.Div(
             children=[
-                html.Div(
+                html.Div( 
+                    # Region of Ireland Filter
                     children=[
                         html.Div(children="Region", className="menu-title"),
                         dcc.Dropdown(
@@ -89,34 +105,122 @@ app.layout = html.Div(
                                 {"label":region, "value":region}
                                 for region in np.sort(df.Region.unique())
                             ],
-                            value="Dublin",
+                            value=["Dublin", "Mid-East", "Midlands", "Mid-West", "North-East", 
+                                   "North-West", "South-East", "South-West", "West"     
+                            ], ## Default Values. 
                             clearable=False,
+                            multi=True,
+                            className="dropdown",
+                        ),
+                    ]
+                ),
+                 html.Div(
+                    # Gender Filter
+                    children=[
+                        html.Div(children="Gender", className="menu-title"),
+                        dcc.Dropdown(
+                            id="gender-filter",
+                            options=[
+                                {'label':'Male', 'value' : 'Male'},
+                                {'label':'Female', 'value' : 'Female'},
+                            ],
+                            value=["Male","Female"], ## Default (initial) Value. 
+                            clearable=False,
+                            multi=True,
                             className="dropdown",
                         ),
                     ]
                 ),
                 html.Div(
+                    # Age selector
                     children=[
-                        html.Div(children="Date Range", className="menu-title"),
-                        dcc.DatePickerRange(
-                            id="date-range",
-                            min_date_allowed=df.date.min().date(),
-                            max_date_allowed=df.date.max().date(),
-                            start_date=df.date.min().date(),
-                            end_date=df.date.max().date(),
-                        )
+                        html.Div(children="Age Range", className="menu-title"),
+                        dcc.Dropdown(
+                            id="age-filter",
+                            options=[
+                                {'label':'18-24', 'value' : 'Adults Aged 18-24'},
+                                {'label':'25-44', 'value' : 'Adults Aged 25-44'},
+                                {'label':'45-64', 'value' : 'Adults Aged 45-64'},
+                                {'label':'65+', 'value' : 'Adults Aged 65+'},
+                            ],
+                            value=["Adults Aged 18-24","Adults Aged 25-44", "Adults Aged 45-64", "Adults Aged 65+"], ## Default (initial) Value. 
+                            clearable=False,
+                            multi=True,
+                            className="dropdown",
+                        ),
                     ]
-                ),
+               ),
             ],
-            className="menu",
+            className="first-menu",
         ),
         html.Div(
             children=[
+                ####################### Fig 1. The region chart. 
                 html.Div(
                     children=dcc.Graph(
                         id="Region-chart", config={"displayModeBar" : False},
                     ),
                     className="card"
+                ),
+                ########################## Second row of filters
+                html.Div(
+                    children=[
+                        html.Div(
+                            # Single Region of Ireland Filter
+                            children=[
+                                html.Div(children="Region", className="menu-title"),
+                                dcc.Dropdown(
+                                    id="single-region-filter",
+                                    options=[
+                                        {"label":region, "value":region}
+                                        for region in np.sort(df.Region.unique())
+                                    ],
+                                    value="Dublin", ## Default Value. 
+                                    clearable=False,
+                                    className="dropdown",
+                                ),
+                            ]
+                        ),
+                        html.Div(
+                            # Date selector filter. This was orginally a calander filter, but as there is only
+                            # 3 dates (the start of the months Jan, June & Dec) it makes more sense to have a dropdown bar and change the
+                            # dates into just the names of the months
+                            children=[
+                                html.Div(children="Month Selector", className="menu-title"),
+                                dcc.Dropdown(
+                                    id="month-filter",
+                                    options=[
+                                        {"label":month, "value":month}
+                                        for month in df.date.unique()
+                                    ],
+                                    value=["January","June", "December"], ## Default (initial) Value. 
+                                    clearable=False,
+                                    multi=True,
+                                    className="dropdown",
+                                ),
+                            ]
+                        ),
+                        html.Div(
+                            # Age selector
+                            children=[
+                                html.Div(children="Age Range", className="menu-title"),
+                                dcc.Dropdown(
+                                    id="age-filter2",
+                                    options=[
+                                        {'label':'18-24', 'value' : 'Adults Aged 18-24'},
+                                        {'label':'25-44', 'value' : 'Adults Aged 25-44'},
+                                        {'label':'45-64', 'value' : 'Adults Aged 45-64'},
+                                        {'label':'65+', 'value' : 'Adults Aged 65+'},
+                                    ],
+                                    value=["Adults Aged 18-24","Adults Aged 25-44", "Adults Aged 45-64", "Adults Aged 65+"], ## Default (initial) Value. 
+                                    clearable=False,
+                                    multi=True, 
+                                    className="dropdown",
+                                ),
+                            ]
+                       ),
+                    ],
+                    className="second-menu",
                 ),
                 html.Div(
                     children=dcc.Graph(
@@ -129,6 +233,54 @@ app.layout = html.Div(
                         id="Families-chart", config={"displayModeBar": False},
                     ),
                     className="card",
+                ),
+                html.Div(
+                   children = [ 
+                       html.Div(
+                           html.H1("Homeless Statistics Ireland 2020", style={'color':'black', 'padding-top': '10px', 'padding-bottom': '20px'}, className = "header-title" )
+                       ),
+                       html.Div(html.Img(src="/assets/homelessImage.jfif"), 
+                                style={'display': 'inline-block', 'float':'right', 'padding-top': '20px'},
+                                className="card",
+                       ),
+                       html.Div(children=[ 
+                                   html.P("Jan 2020", style={'font-size' : '40px'}),
+                                   html.Ul(id='my-list', children=[
+                                                               html.Li( str(df["Total Adults"].head(9).sum()) + 
+                                                                        " Adults"),
+                                                               html.Li( str(df["Number of Families"].head(9).sum()) +
+                                                                        " Families" ),                                              
+                                                         ])
+                               ],
+                               style={'display': 'inline-block', 'padding-left': '20px', 'padding-right': '30px', 'font-size' : '20px'},
+                               className="card",
+                       ),
+                       html.Div(children=[
+                                    html.P("June 2020", style={'font-size' : '40px'}),
+                                    html.Ul(id='June-list', children=[
+                                                                html.Li( str(df["Total Adults"].head(18).tail(9).sum()) + 
+                                                                         " Adults"),
+                                                                html.Li( str(df["Number of Families"].head(18).tail(9).sum()) +
+                                                                         " Families" ),       
+                                                           ])
+                                ], 
+                                style={'display': 'inline-block', 'padding-left': '20px', 'padding-right': '30px', 'font-size' : '20px'},
+                                className="card",
+                       ),
+                       html.Div(children=[
+                                    html.P("Dec 2020", style={'font-size' : '40px'}),
+                                    html.Ul(id='Dec-list', children=[
+                                                                html.Li( str(df["Total Adults"].tail(9).sum()) + 
+                                                                         " Adults"),
+                                                                html.Li( str(df["Number of Families"].tail(9).sum()) +
+                                                                         " Families" ),       
+                                                           ])
+                                ],
+                                style={'display': 'inline-block', 'padding-left': '20px', 'padding-right': '30px', 'font-size' : '20px'},
+                                className="card",
+                       ),
+                   ],
+                   
                 ),
             ],
             className="wrapper",
@@ -154,46 +306,130 @@ app.layout = html.Div(
 @app.callback(
     [Output("Region-chart", "figure"), Output("Adult-chart", "figure"), Output("Families-chart", "figure")],
     [
-        Input("region-filter", "value"),
-        Input("date-range", "start_date"),
-        Input("date-range", "end_date"),
+        Input("region-filter", "value"), # For graph 1 (3 pie charts) ## This is a list
+        Input("gender-filter", "value"), # For graph 1 (3 pie charts) ## This is a list
+        Input("age-filter", "value"), # For graph 1 (3 pie charts)   ## This is a list
+        Input("single-region-filter", "value"), ## This is a single value
+        Input("month-filter", "value"),## This is a list
     ],
 )
   # The  Input("region-filter", "value") line will effectively watch the "region-filter" element for changes
   # and will take its value property if the element changes
   
-def update_charts(region, start_date, end_date):
+def update_charts(regions, gender, age, region, month):
+    ## Mask cannot deal with an array/list input, so only (single) regions can go in here
     mask = (
         (df.Region == region)
-        & (df.date >= start_date)
-        & (df.date <= end_date)
     )
-    filtered_data = df.loc[mask, :]
+    ## Filtered data after region
+    Single_Region_filtered_data = df.loc[mask, :] ## Will use this in creating a breakdown of counts in age ranges
+    ## Filtered data after month filter
+    filtered_data = df[(df['date'].isin(month))] 
     
-    fig = make_subplots(rows=1, cols=3, subplot_titles=("", "Breakdown of Homeless Adults by Region", ""), specs=[[{"type": "pie"}, {"type": "pie"}, {"type": "pie"}]])
     
+    ############## Now filter the data for graph 1. ################################
+    # Below Vars will be used for filtering columns
+    filtered_column = "Total Adults"
+    numRegions = 9
+    
+    ## Regions filter
+    # If the region has not been selected all regions should be shown
+    if(len(regions) == 0 ):
+        regions=["Dublin", "Mid-East", "Midlands", "Mid-West", "North-East", 
+                                       "North-West", "South-East", "South-West", "West"     
+        ]
+    filtered_data_1 = df[(df['Region'].isin(regions))] ## Only the regions selected are in the filtered df
+    
+    ## Gender Filter
+    # If the user has not selected any genders the total adults figure should be used. 
+    if(len(gender) == 0):
+        gender = ['Male', 'Female']
+    # Need to use if statements to filter Gender (as diff columns for Male and Female)
+    # If the below if statement is False then no chanegs need to be made
+    if (len(gender) != 2):
+        filtered_column = str(gender[0]) + " Adults"
+    
+    ## Age bracket filter. 
+    # If no age has been selected all age groups should be selected
+    if(len(age) == 0 ):
+        age = ["Adults Aged 18-24","Adults Aged 25-44", "Adults Aged 45-64", "Adults Aged 65+"]
+    
+    # if age bracket is not the default the app will create another row of graphs analyzing all the age brackets selected
+    num_brackets = len(age) ## Gets the number of age brackets selected 
+    if (num_brackets == 4): 
+        fig = make_subplots(rows=1, cols=3, subplot_titles=[("January"),("June"),("December")] ,specs=[[{"type": "pie"}, {"type": "pie"}, {"type": "pie"}]])
+    else:
+        fig = make_subplots(rows=(1+num_brackets), cols=3, subplot_titles=[("January"),("June"),("December")] ,specs=([[{"type": "pie"}, {"type": "pie"}, {"type": "pie"}]])*(1+num_brackets) )
+    
+    # The first 3 graphs will only be affected by the gender and regions filters
     fig.add_trace(go.Pie( 
-            values= df["Total Adults"].head(9), 
-            labels=df["Region"].head(9),
-            title ="January"
+            values= filtered_data_1[filtered_column].head(numRegions), 
+            labels= filtered_data_1["Region"].head(numRegions),
+            title = filtered_column 
         ),  
-        row=1, col=1)
+        row=1, col=1
+    )
     fig.add_trace(go.Pie( 
-            values= df["Total Adults"].head(18).tail(9), 
-            labels=df["Region"].head(18).tail(9),
-            title ="June"
+            values= filtered_data_1[filtered_column].head(numRegions*2).tail(numRegions), 
+            labels= filtered_data_1["Region"].head(numRegions*2).tail(numRegions),
+            title = filtered_column
         ),
-        row=1, col=2)
+        row=1, col=2
+    )
     fig.add_trace(go.Pie( 
-            values=df["Total Adults"].tail(9), 
-            labels=df["Region"].tail(9),
-            title ="December"
+            values= filtered_data_1[filtered_column].tail(numRegions), 
+            labels= filtered_data_1["Region"].tail(numRegions),
+            title = filtered_column
         ),
-        row=1, col=3)
+        row=1, col=3
+    )
+    
+    # If age brackets have been selected graphs will be generated for each bracket
+    count = 2
+    if(num_brackets != 4):
+        for age_bracket in age:
+             fig.add_trace(go.Pie(  
+                    values= filtered_data_1[age_bracket].head(numRegions), 
+                    labels= filtered_data_1["Region"].head(numRegions),
+                    title = str(age_bracket)
+                ),  
+                row=count, col=1
+             )
+             fig.add_trace(go.Pie( 
+                    values= filtered_data_1[age_bracket].head(numRegions*2).tail(numRegions), 
+                    labels= filtered_data_1["Region"].head(numRegions*2).tail(numRegions),
+                    title = str(age_bracket)
+                ),
+                row=count, col=2
+             )
+             fig.add_trace(go.Pie( 
+                    values= filtered_data_1[age_bracket].tail(numRegions), 
+                    labels= filtered_data_1["Region"].tail(numRegions),
+                    title = str(age_bracket)
+                ),
+                row=count, col=3
+             )
+             count = count + 1
+        
+    # Will now update the length/height of the figure depending on the number of rows
+    fig.update_layout(
+        height = 270*count, ## If the height is any larger than 270 there is problems with 
+        # how the percents appear in the top row 
+    )
+    
+    ## Now will add a hole to make the pie charts like a donut
+    fig.update_traces(hole=.4, hoverinfo="label+percent+value")
+    
+    ## Now will add title
+    fig.update_layout(
+        title_text="Breakdown of Homeless Adults by Region 2020",
+    )
     
     # region_chart_figure = px.pie(df.head(9), values="Total Adults", names="Region", title= "Regional Breakdown of homeless Adults")
     region_chart_figure = fig
-     
+    ######################################## End of fig 1 #################################
+    
+    ####################################### Start of Fig 2 ##################################
     adult_chart_figure = {
         "data": [
             {
@@ -230,7 +466,7 @@ def update_charts(region, start_date, end_date):
             "colorway": ["#E12D39"],
         },
     }
-    return region_chart_figure, adult_chart_figure, family_chart_figure
+    return region_chart_figure, adult_chart_figure, family_chart_figure 
 
 
 
