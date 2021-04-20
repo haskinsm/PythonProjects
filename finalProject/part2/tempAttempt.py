@@ -4,10 +4,21 @@ Created on Fri Apr 16 18:36:19 2021
 
 @author: micha
 """
-## When you run the program search http://127.0.0.1:8050/ and the 
-#  interactive dashboard should be visible and working
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Apr 12 21:38:43 2021
 
-import dash #  helps you initialize your application (dashboard)
+@author: micha
+"""
+################# Michael & Jasons Dashboard ###########################
+######### This dashboard examines the homelessness situation in Ireland in 2020 #############
+
+## When you run the program search http://127.0.0.1:8050/ and the 
+#  interactive dashboard should be visible and working 
+
+## Good source: https://realpython.com/python-dash/
+
+import dash #  helps you initialize your application (dashboard) 
 import dash_core_components as dcc # allows you to create interactive components like graphs, dropdowns, or date ranges
 import dash_html_components as html # lets you access HTML tags
 import pandas as pd
@@ -16,17 +27,97 @@ from dash.dependencies import Output, Input
 import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-import branca.colormap as cm
-import folium
-import geopandas as gpd
+# Originally planned to do a regional heatmap, but it was too hard
+#import branca.colormap as cm
+#import folium
+#import geopandas as gpd 
+
+###################################### Read in the datasets from Data.Gov.ie #############################
+from urllib.request import urlretrieve
+import sys ## For sys.exit()
+
+### Read in as csv file directly from the data.Gov.ie site
+######### Jan 2020 Report
+url_1 = "https://data.usmart.io/org/ae1d5c14-c392-4c3f-9705-537427eeb413/resource?resourceGUID=4ef0ffc4-2ff8-429f-aed4-24c5f2189d62"
+## Need to have an exception hander in case the data won't load
+try:
+    urlretrieve (url_1, "Homelessness Report January 2020.csv")
+except: 
+    # I didn't use the following commented out code as I don't think the errors outputted are very descriptive in this case
+    # except Exception as exc:
+    # print('There was a problem: %s' % (exc))
+    print("Unable to read in the 'Homelessness Report January 2020.csv' dataset.\n" + 
+          "Please check your internet connection. Alternatively the path to the file on"+
+          " data.gov.ie may have changed or the site may be down.")
+    print("\nProgram Execution aborted. Goodbye.")
+    sys.exit() ## This will terminate the script execution
+    ### Note: if you run code chunk by chunk and it arrives at a sys.exit an error will be thrown.
+    ## If the whole script is ran it will work as intended.
+datasetJan20 = pd.read_csv(url_1) ## Read in as pandas datafile
+
+######### June 2020 report
+url_2 = "https://data.usmart.io/org/ae1d5c14-c392-4c3f-9705-537427eeb413/resource?resourceGUID=a1880631-b402-4bc1-a340-c88f8e53912b"
+try:
+    urlretrieve (url_2, "Homelessness Report June 2020.csv")   
+except:
+    print("Unable to read in the 'Homelessness Report June 2020.csv' dataset.\n" + 
+          "Please check your internet connection. Alternatively the path to the file on"+
+          " data.gov.ie may have changed or the site may be down.")
+    print("\nProgram Execution aborted. Goodbye.")
+    sys.exit() ## This will terminate the script execution
+datasetJune20 = pd.read_csv(url_2)
+
+####### Dec 2020 report
+url_3 = "https://data.usmart.io/org/ae1d5c14-c392-4c3f-9705-537427eeb413/resource?resourceGUID=2827f749-43bc-46d9-9f55-4e3aa035aa5d"
+try:
+    urlretrieve (url_3, "Homelessness Report December 2020.csv")   
+except:
+    print("Unable to read in the 'Homelessness Report December 2020.csv' dataset.\n" + 
+          "Please check your internet connection. Alternatively the path to the file on"+
+          " data.gov.ie may have changed or the site may be down.") 
+    print("\nProgram Execution aborted. Goodbye.")
+    sys.exit() ## This will terminate the script execution
+datasetDec20 = pd.read_csv(url_3)
 
 
-## Read in the 3 datasets. 
-datasetJan20 = pd.read_csv("Homelessness Report January 2020.csv")
-datasetJune20 = pd.read_csv("Homelessness Report June 2020.csv")
+############## (Data read in here NOT USED) Reading the data from data.gov.ie API ################
+### The below code successfully reads in the January 2020 dataset from the API.
 
-datasetDec20 = pd.read_csv("Homelessness Report December 2020.csv")
+# I did not use this code for reading in any of the 3 datasets that were used in the (dashboard) app as
+# I belive its more complicated that the previous method of reading in the datasets. 
+# An increased level of complexity normally results in there being more errors. 
 
+## I left the code in just to show that we were able to interrogate and work with the API.
+# It prob would be sensible to take it out considering errors may be thrown from this and the program
+# will be terminated when it may have been able to proceed (i.e. data was read in correctly above),
+# but I just wanted to show we could do it. 
+import json
+import requests
+
+url_API = "https://api.usmart.io/org/ae1d5c14-c392-4c3f-9705-537427eeb413/29df500e-877c-4146-9f9e-0182004bac7c/1/urql"
+res = requests.get(url_API)
+
+### Now check if request was successful 
+try:
+    res.raise_for_status()
+except Exception as exc:
+    print('There was a problem: %s' % (exc))
+    sys.exit() ## This will terminate the script execution
+    
+JSONContent = res.json()
+content = json.dumps(JSONContent, indent = 4, sort_keys = True)
+### Now create a Pandas df from the JSON
+jsonData = json.loads(content) ## Change the (JSON) string into a JSON object that can be read into a pd df
+test_df = pd.DataFrame.from_dict(jsonData)
+## Drop an uneccessary column that appears to be an API id tag of some sorts
+test_df = test_df.drop(['usmart_id'], axis=1)
+## This df is unused in the (dashboard) app
+
+##########################################################################
+######################### End of Reading in the Data ########################
+##########################################################################
+
+######################## Clean & Merge the data ##########################
 ### Now add a date column to each dataset
 datasetJan20['date'] = "January"
 # Date must be formatted in format YYYY-MM-DD in plotly
@@ -51,10 +142,10 @@ cols = cols[-1:] + cols[:-1]
 df = df[cols]
 
 
-#countries = gpd.read_file('python/Countries_WGS84.shp') # Part of my attempt to make a heatmap of Ireland
-
-
-## Now begin creating a Dash Dashboard by Plotly
+##############################################################################################################
+############################## Now create a Plotly Dash Dashboard ####################################
+##############################################################################################################
+################### Styling
 # First will link a CSS stylesheet located in my working directory 
 external_stylesheets = [
     {
@@ -65,16 +156,25 @@ external_stylesheets = [
 ]
 # The above code specifies an external CSS files and a font family. 
 # This will be loaded before the body of the application loads and added to 
-# the head tag of the application
+# the head tag of the application.
+# Alternatively the stylying could have been done like so:
+    #html.H1(
+     #    children = "Homelessness 2020",
+      #   style = {"fontSize":"48px", "color":"blue"},   
+    #),
+## Doing it the above way is very slow and tedious however, so I used a CSS sheet
 
+
+########## Create app ####################
 app = dash.Dash(__name__, external_stylesheets = external_stylesheets) ## creates instance of the dash class
 # server = app.server # Tried releasing the app on Heroku but can't get it to work right on that platform
 app.title = "Homelessness Dashboard" ## This is the text that will appear in the title bar of your web browser 
 
-# Define the layout of the dash application
+############ Define the layout of the dash application ####################
 app.layout = html.Div(
     children = [
         html.Div(
+            ############### Page (Dashboard) Title #########################
             children = [
                 html.P(children="🛏️", className="header-emoji"),
                 html.H1(children="Homelessness Ireland 2020",
@@ -88,15 +188,15 @@ app.layout = html.Div(
             ],
             className="header",
         ),
-        # First 2 Filters:
+        ############################ First set of Filters: ##########################
         # (When the user uses these filters the graphs that can be filtered by this data will be changed,
         #  code for this is in an update function near the end of the script.)
-        # Note: Had to be very careful with filters as for example it is not possible to know how many 
+        # Note: Had to be very careful with filters as for example it is not possible to know from the dataset how many 
         # females from Dublin accessed private emergency accomodation
         html.Div(
             children=[
                 html.Div( 
-                    # Region of Ireland Filter
+                    ########### Regions of Ireland Filter
                     children=[
                         html.Div(children="Region", className="menu-title"),
                         dcc.Dropdown(
@@ -109,13 +209,13 @@ app.layout = html.Div(
                                    "North-West", "South-East", "South-West", "West"     
                             ], ## Default Values. 
                             clearable=False,
-                            multi=True,
+                            multi=True, ### Can select multiple
                             className="dropdown",
                         ),
                     ]
                 ),
                  html.Div(
-                    # Gender Filter
+                    ############ Gender Filter
                     children=[
                         html.Div(children="Gender", className="menu-title"),
                         dcc.Dropdown(
@@ -132,7 +232,8 @@ app.layout = html.Div(
                     ]
                 ),
                 html.Div(
-                    # Age selector
+                    ############## Age selector
+                    # (When this selector is used more graphs will appear below the 3 donut pie charts)
                     children=[
                         html.Div(children="Age Range", className="menu-title"),
                         dcc.Dropdown(
@@ -153,20 +254,25 @@ app.layout = html.Div(
             ],
             className="first-menu",
         ),
+        ##################### End of first set of filters #################
         html.Div(
             children=[
-                ####################### Fig 1. The region chart. 
+                ####################### Fig 1. The region donut pie-charts. ###################
                 html.Div(
                     children=dcc.Graph(
                         id="Region-chart", config={"displayModeBar" : False},
+                        ######## Note the fig element is created in the update function so that
+                        # it is interactive
                     ),
                     className="card"
                 ),
-                ########################## Second row of filters
+                ####################### End of fig 1 ########################
+                
+                ########################## Second set of filters ##################
                 html.Div(
                     children=[
                         html.Div(
-                            # Single Region of Ireland Filter
+                            ############ Single Region of Ireland Filter
                             children=[
                                 html.Div(children="Region", className="menu-title"),
                                 dcc.Dropdown(
@@ -182,7 +288,8 @@ app.layout = html.Div(
                             ]
                         ),
                         html.Div(
-                            # Date selector filter. This was orginally a calander filter, but as there is only
+                            ########## Date selector filter. 
+                            # This was orginally a calander filter, but as there is only
                             # 3 dates (the start of the months Jan, June & Dec) it makes more sense to have a dropdown bar and change the
                             # dates into just the names of the months
                             children=[
@@ -193,35 +300,19 @@ app.layout = html.Div(
                                         {"label":month, "value":month}
                                         for month in df.date.unique()
                                     ],
-                                    value=["January","June", "December"], ## Default (initial) Value. 
+                                    value="January", ## Default (initial) Value. 
                                     clearable=False,
-                                    multi=True,
+                                    multi=False, ## Prevent user from selecting multiple as graphing becomes very challenging. 
                                     className="dropdown",
                                 ),
                             ]
                         ),
-                        html.Div(
-                            # Age selector
-                            children=[
-                                html.Div(children="Age Range", className="menu-title"),
-                                dcc.Dropdown(
-                                    id="age-filter2",
-                                    options=[
-                                        {'label':'18-24', 'value' : 'Adults Aged 18-24'},
-                                        {'label':'25-44', 'value' : 'Adults Aged 25-44'},
-                                        {'label':'45-64', 'value' : 'Adults Aged 45-64'},
-                                        {'label':'65+', 'value' : 'Adults Aged 65+'},
-                                    ],
-                                    value=["Adults Aged 18-24","Adults Aged 25-44", "Adults Aged 45-64", "Adults Aged 65+"], ## Default (initial) Value. 
-                                    clearable=False,
-                                    multi=True, 
-                                    className="dropdown",
-                                ),
-                            ]
-                       ),
                     ],
                     className="second-menu",
                 ),
+                ###################### End of 2nd set of filters ########################
+                
+                ##################### Remaining graphs (Fig 2,3,4) #####################
                 html.Div(
                     children=dcc.Graph(
                         id="Adult-chart", config={"displayModeBar" : False},
@@ -230,10 +321,19 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     children=dcc.Graph(
-                        id="Families-chart", config={"displayModeBar": False},
+                        id="Accomodation-chart", config={"displayModeBar": False},
                     ),
                     className="card",
                 ),
+                html.Div(
+                    children=dcc.Graph(
+                        id="National-families-chart", config={"displayModeBar": False},
+                    ),
+                    className="card",
+                ),
+                ##################### End of remaining graphs #################
+                
+                #################### National Summary statistics #################
                 html.Div(
                    children = [ 
                        html.Div(
@@ -285,18 +385,8 @@ app.layout = html.Div(
             ],
             className="wrapper",
         ),
-    ]
+    ] 
 )
-
-#### Dashboard Styling
-# Was done by importing a CSS sheet 
-# Alternatively it could have been done like so:
-#html.H1(
- #    children = "Homelessness 2020",
-  #   style = {"fontSize":"48px", "color":"blue"},   
-#),
-## Doing it the above way is very slow and tedious however, so I used a CSS sheet
-
 
 #### Making the Dashboard interative
 ## Using a callback to make the grapgs interactive. The inputs and outputs are clearly defined here. 
@@ -304,30 +394,23 @@ app.layout = html.Div(
     # The indentifier element that they'll modify when the function executes
     # The property of the element to be modified. 
 @app.callback(
-    [Output("Region-chart", "figure"), Output("Adult-chart", "figure"), Output("Families-chart", "figure")],
+    [Output("Region-chart", "figure"), Output("Adult-chart", "figure"), Output("Accomodation-chart", "figure"), Output("National-families-chart", "figure")],
     [
         Input("region-filter", "value"), # For graph 1 (3 pie charts) ## This is a list
         Input("gender-filter", "value"), # For graph 1 (3 pie charts) ## This is a list
         Input("age-filter", "value"), # For graph 1 (3 pie charts)   ## This is a list
-        Input("single-region-filter", "value"), ## This is a single value
-        Input("month-filter", "value"),## This is a list
+        Input("single-region-filter", "value"), ## For graph 2  ## This is a single value
+        Input("month-filter", "value"),## For graph 2   ## This is a single value
     ],
 )
   # The  Input("region-filter", "value") line will effectively watch the "region-filter" element for changes
   # and will take its value property if the element changes
   
+  
+### The update function is used to make the graphs interactive
 def update_charts(regions, gender, age, region, month):
-    ## Mask cannot deal with an array/list input, so only (single) regions can go in here
-    mask = (
-        (df.Region == region)
-    )
-    ## Filtered data after region
-    Single_Region_filtered_data = df.loc[mask, :] ## Will use this in creating a breakdown of counts in age ranges
-    ## Filtered data after month filter
-    filtered_data = df[(df['date'].isin(month))] 
-    
-    
-    ############## Now filter the data for graph 1. ################################
+       
+    ################# Now filter the data for graph 1. ################################
     # Below Vars will be used for filtering columns
     filtered_column = "Total Adults"
     numRegions = 9
@@ -353,6 +436,10 @@ def update_charts(regions, gender, age, region, month):
     # If no age has been selected all age groups should be selected
     if(len(age) == 0 ):
         age = ["Adults Aged 18-24","Adults Aged 25-44", "Adults Aged 45-64", "Adults Aged 65+"]
+    ########################### End of filtering data for fig 1 ###############
+    
+    ########################### Create fig 1 ##################################
+    ### Will create a number of donut pie-charts using make_suplots function.
     
     # if age bracket is not the default the app will create another row of graphs analyzing all the age brackets selected
     num_brackets = len(age) ## Gets the number of age brackets selected 
@@ -429,54 +516,228 @@ def update_charts(regions, gender, age, region, month):
     region_chart_figure = fig
     ######################################## End of fig 1 #################################
     
+    
+    
+    ####################################### Filter data for fig 2 #########################
+    ## Mask cannot deal with an array/list input, so only (single) regions can go in here
+    mask = (
+        (df.Region == region)
+        & (df.date == month)
+    )
+    
+    ## Filtered data after region and month filter applied 
+    filtered_data_2 = df.loc[mask, :]
+   
+    ####################################### End of filtering data for fig 2 ################
+    
     ####################################### Start of Fig 2 ##################################
-    adult_chart_figure = {
-        "data": [
-            {
-                "x": filtered_data["date"],
-                "y": filtered_data["Total Adults"],
-                "type": "bar",
-                "hovertemplate": "%{y:.2f}<extra></extra>",
-            },
-        ],
-        "layout": {
-            "title": {
-                "text": "Total Homeless Adults",
-                "x": 0.05,
-                "xanchor": "left",
-            },
-            "xaxis": {"fixedrange": True},
-            "yaxis": {"fixedrange": True},
-            "colorway": ["#17B897"],
-        },
-    }
+    
+    pv = pd.pivot_table(filtered_data_2, index=['Region'], values=['Adults Aged 18-24', 'Adults Aged 25-44', 'Adults Aged 45-64', 'Adults Aged 65+'], aggfunc=sum, fill_value=0) 
+   
+    fig2 = make_subplots(rows=1, cols=1)
+    fig2.add_trace(
+        go.Bar(
+            x=pv.columns, 
+            y=pv.values[0], 
+            name = "Adults Aged 18-24",
+            ## Now set colors of the columns
+            marker_color='rgb(158,202,225)', 
+            marker_line_color='rgb(8,48,107)',
+            marker_line_width=1.5, 
+            opacity=0.6
+        )
+    )
+    ## Now will add title
+    fig2.update_layout( 
+        title_text="Breakdown of Homeless Adults in " + str(pv.index.values[0]) + ", " + str(month) + " 2020" + " by age bracket",
+        #xaxis =  {'showgrid': False},
+        #yaxis = {'showgrid': True, 'color':'black'},
+        plot_bgcolor='rgba(0,0,0,0)' ## Set the background colour white  
+    )
+     
+    adult_chart_figure = fig2
+    #################################### End of fig 2 ####################
 
-    family_chart_figure = {
-        "data": [
-            {
-                "x": filtered_data["date"],
-                "y": filtered_data["Number of Families"],
-                "type": "bar",
-            },
-        ],
-        "layout": {
-            "title": {"text": "Homeless Families", "x": 0.05, "xanchor": "left"},
-            "xaxis": {"fixedrange": True},
-            "yaxis": {"fixedrange": True},
-            "colorway": ["#E12D39"],
-        },
-    }
-    return region_chart_figure, adult_chart_figure, family_chart_figure 
+    ################################### Start of fig 3 #################
+    ## Fig 3 uses the same filtered data as fig 2
+    pv_2 = pd.pivot_table(filtered_data_2, index=['Region'], 
+                          values=['Number of people who accessed Private Emergency Accommodation',
+                                    'Number of people who accessed Supported Temporary Accommodation', 
+                                    'Number of people who accessed Temporary Emergency Accommodation', 
+                                    'Number of people who accessed Other Accommodation'], 
+                          aggfunc=sum, fill_value=0) 
+   
+    fig3 = make_subplots(rows=1, cols=1)
+    fig3.add_trace(
+        go.Bar(
+            x=["Private Emergency Acc.","Supported Temp Acc.", "Temp Emergency Acc.", "Other Acc."], 
+            y=pv_2.values[0],  
+            ## Now set colors of the columns
+            marker_color='PaleGreen',  
+            marker_line_color='rgb(8,48,107)',
+            marker_line_width=1.5, 
+            opacity=0.6
+        )
+    )
+    ## Now will add title
+    fig3.update_layout( 
+        title_text="Number of times different types of Accomodation were accessed in " + str(pv_2.index.values[0] + ", "+ str(month) + " 2020"),
+        #xaxis =  {'showgrid': False},
+        #yaxis = {'showgrid': True, 'color':'black'},
+        plot_bgcolor='rgba(0,0,0,0)', ## Set the background colour white  
+        height = 500,
+        width = 1000
+    )
+    
+    accomodation_chart_figure = fig3
+    ############################## End of fig 3 #############################
+    
+    ############################# Start of fig 4 ###########################
+    ##### Filter the data only with respect to month as want to create a national graph:
+    mask_2 = (
+        (df.date == month)
+    )
+    ## Filtered data after month filter applied 
+    filtered_data_3 = df.loc[mask_2, :]
+    
+    ##### Now create fig:
+    pv_3 = pd.pivot_table(filtered_data_3, index=['Region'], values=['Number of Families', 
+                                                                     'Number of Adults in Families', 
+                                                                     'Number of Single-Parent families', 
+                                                                     'Number of Dependants in Families'
+                                                                     ], aggfunc=sum, fill_value=0) 
+   
+    fig4 = make_subplots(rows=1, cols=1)
+    ### I will now create a trace for each Region
+    fig4.add_trace(
+        go.Bar(
+            x=pv_3.columns, 
+            y=pv_3.values[0], 
+            name = pv_3.index[0],
+            ## Now set colors of the columns
+            marker_color= 'green', 
+            marker_line_color='rgb(8,48,107)',
+            marker_line_width=1.5, 
+            opacity=0.6
+        )
+    )
+    fig4.add_trace(
+        go.Bar(
+            x=pv_3.columns, 
+            y=pv_3.values[1], 
+            name = pv_3.index[1],
+            ## Now set colors of the columns
+            marker_color='Chartreuse', 
+            marker_line_color='rgb(8,48,107)',
+            marker_line_width=1.5, 
+            opacity=0.6
+        )
+    )
+    fig4.add_trace(
+        go.Bar(
+            x=pv_3.columns, 
+            y=pv_3.values[2], 
+            name = pv_3.index[2],
+            ## Now set colors of the columns
+            marker_color='cyan', 
+            marker_line_color='rgb(8,48,107)',
+            marker_line_width=1.5, 
+            opacity=0.6
+        )
+    )
+    fig4.add_trace(
+        go.Bar(
+            x=pv_3.columns, 
+            y=pv_3.values[3], 
+            name = pv_3.index[3],
+            ## Now set colors of the columns
+            marker_color='Coral', 
+            marker_line_color='rgb(8,48,107)',
+            marker_line_width=1.5, 
+            opacity=0.6
+        )
+    )
+    fig4.add_trace(
+        go.Bar(
+            x=pv_3.columns, 
+            y=pv_3.values[4], 
+            name = pv_3.index[4],
+            ## Now set colors of the columns
+            marker_color='Crimson', 
+            marker_line_color='rgb(8,48,107)',
+            marker_line_width=1.5, 
+            opacity=0.6
+        )
+    )
+    fig4.add_trace(
+        go.Bar(
+            x=pv_3.columns, 
+            y=pv_3.values[5], 
+            name = pv_3.index[5],
+            ## Now set colors of the columns
+            marker_color='Chocolate', 
+            marker_line_color='rgb(8,48,107)',
+            marker_line_width=1.5, 
+            opacity=0.6
+        )
+    )
+    fig4.add_trace(
+        go.Bar(
+            x=pv_3.columns, 
+            y=pv_3.values[6], 
+            name = pv_3.index[6],
+            ## Now set colors of the columns
+            marker_color='DarkSlateBlue', 
+            marker_line_color='rgb(8,48,107)',
+            marker_line_width=1.5, 
+            opacity=0.6
+        )
+    )
+    fig4.add_trace(
+        go.Bar(
+            x=pv_3.columns, 
+            y=pv_3.values[7], 
+            name = pv_3.index[7],
+            ## Now set colors of the columns
+            marker_color='Dark Orange', 
+            marker_line_color='rgb(8,48,107)',
+            marker_line_width=1.5, 
+            opacity=0.6
+        )
+    )
+    fig4.add_trace(
+        go.Bar(
+            x=pv_3.columns, 
+            y=pv_3.values[8], 
+            name = pv_3.index[8],
+            ## Now set colors of the columns
+            marker_color='Violet', 
+            marker_line_color='rgb(8,48,107)',
+            marker_line_width=1.5, 
+            opacity=0.6
+        )
+    )
+    ## Now will add title
+    fig4.update_layout( 
+        title_text="National Homeless Family figures in " + str(month) + " 2020",
+        #xaxis =  {'showgrid': False},
+        #yaxis = {'showgrid': True, 'color':'black'},
+        plot_bgcolor='rgba(0,0,0,0)' ## Set the background colour white  
+    )
+    national_family_chart_figure = fig4
+    
+    ### Now return the graphs 
+    return region_chart_figure, adult_chart_figure, accomodation_chart_figure, national_family_chart_figure 
+
+ 
 
 
-
-
-
-
-#### Run application
+#################### Run application ####################### 
 ## The following two lines of code run the application locally using Flask’s built-in server.
 if __name__ == "__main__":
-    app.run_server(debug=True) #  enables the hot-reloading option in your application. 
-                               #  This means that when you make a change to your app,
-                               #  it reloads automatically, without you having to restart the server.
+    app.run_server(debug=False) #  (***NOW DISABLED (As debug = False)****) If True enables the hot-reloading option in the application. 
+                               #  This means that when changes are made to the app,
+                               #  it reloads automatically, without having to restart the server.
 ## When this is run a web page should load. 
+
+############################################### Should Prob disable the hot-reloading when submit *******************************************

@@ -29,7 +29,7 @@ Created on Wed Mar 31 15:03:51 2021
 ## Using Python V3
 
 
-######################### Read in File
+######################### Read in File using file explorer GUI ################################
 import tkinter as tk 
 from tkinter import filedialog
 
@@ -57,7 +57,7 @@ filePath = filedialog.askopenfilename(parent = root,
    
 
 
-######################## Check FilePath
+######################## Check FilePath #######################
 validPath = True
 
 # 1st check if filePath is empty
@@ -76,7 +76,7 @@ else:
 
 
 
-########################## Read in data into a Pandas Dataframe
+########################## Read in data into a Pandas Dataframe ######################
 import pandas as pd
 import json
 from pandas.io.json import json_normalize
@@ -85,14 +85,18 @@ import sys ## For sys.exit()
 
 df = [] ## initialize dataframe
 
+### If validPath is false an error message will be outputted and no more code will be executed 
 if(validPath == True):
     ## Now will establish if the file is a csv, json, or json-stat 
     if(filePath.endswith('.csv')):
         ## Enters here if its a csv file
+        ## Get user to specify a delimiter 
         chosenSep = input("Please enter a delimiter/separator for your chosen CSV file (Default is ','): ")
         if( chosenSep == ''): 
             chosenSep = ',' ## This will make sure that default is used if nothing is entered above
+        ## Now read in the csv file
         df = pd.read_csv(filePath, sep=chosenSep, header = 'infer', encoding='latin-1')    
+        
     elif(filePath.endswith('.json')):
         ## Enters here if its a JSON file
         with open(filePath, 'r', encoding='utf-8', errors='ignore') as f:
@@ -100,6 +104,22 @@ if(validPath == True):
             data = json.loads(text) ##Creates a list with the json # https://www.freecodecamp.org/news/python-read-json-file-how-to-load-json-from-a-file-and-parse-dumps/
             # converting json dataset from dictionary to dataframe
             df = json_normalize(data['results'])
+            
+    elif(filePath.endswith('.txt')):
+        ## Enters here if its a TXT file
+        ## Sometimes JSON is saved as TXT files so check if the TXT files contains valid JSON
+        with open(filePath, 'r', encoding='utf-8', errors='ignore') as f:
+            text = f.read() ## The json string
+            ## Now have a try catch to catch errors when user reads in a text file that contains no JSON
+            try:
+                data = json.loads(text) ##Creates a list with the json # https://www.freecodecamp.org/news/python-read-json-file-how-to-load-json-from-a-file-and-parse-dumps/
+            except:
+                print("The text (.txt) file you have entered does not contain valid JSON. Files selected must be a CSV, JSON, or JSON-STAT file. Please re-run the program to try again")
+                sys.exit() ## This will terminate the script execution
+            else:
+                # converting json dataset from dictionary to dataframe
+                df = pd.json_normalize(data['features'])   
+            
     else: 
         ## Enters here if Json-Stat or other file 
         # Initialize JsonStatCollection from the file
@@ -113,7 +133,7 @@ if(validPath == True):
             df = data.to_data_frame()
         
 
-    ######################## Descriptive statistics on the dataset
+    ######################## Descriptive statistics on the dataset #########################
     ## As dataset can be anything there is very little descriptive statistics that can be provided.
     import numpy as np
     print("\nDescriptive Statistics: ")
@@ -121,14 +141,21 @@ if(validPath == True):
     ## count of observations (rows) and variables (columns)
     numRows = df.shape[0]
     numCols = df.shape[1]
-    print("\nThis dataset has", numRows, "observations and", numCols, "columns.")
+    print("\nThis dataset has", numRows, "observations (rows) and", numCols, "columns.")
     
     ## Number of blanks or 'nan' entries
     numNanEntries = (df.astype(str) == 'nan').values.sum()
     numBlanks = (df.astype(str) == '').values.sum()
-    if( numRows*numCols == numNanEntries):
+    
+    ## If more than half the entries are empty or there is only one entry it is likely the data was read in wrong
+    if( numRows*numCols*0.5 <= numNanEntries | numRows*numCols == 1):
         print("There was a problem reading in the file. If you selected a csv file this may be because" + 
                "you selected an incorrect seperator for your dataset. The seperator used was" + chosenSep)
+        response = input("Enter 'Yes' to continue. Enter anything else and the program will stop.")
+        if ( str(response) == "Yes"):
+             sys.exit() ## This will terminate the script execution
+        else:
+             print("\nThe created dataframe contains", numNanEntries, "'nan' entries and", numBlanks, "blanks." )
     else:
         print("\nThe created dataframe contains", numNanEntries, "'nan' entries and", numBlanks, "blanks." )
     
@@ -143,12 +170,21 @@ if(validPath == True):
     print("\nThe first 5 rows of the dataset: \n", df.head())
     
     
+    ######################## Ask if user want's to proceed #######################
+    cont = input("\nEnter 'Yes' if you would like to continue: ")
+    if(str(cont) != 'Yes'):
+        print("\nGoodbye.")
+        sys.exit() ## This will terminate the script execution
     
-    ######################## Export the data to an excel spreadsheet
+    
+    ######################## Export the data to an excel spreadsheet ##################
     import os, time
     
     ## create excel file in local working directory
-    fileName = input("Please enter a file name for the excel worksheet: ")
+    fileName = input("Please enter a file name for the excel worksheet. \nFilenames cannot contain any special chars (e.g. ,^"").\n" +
+                     "If you enter a file name with a fullstop ('.') the file name will be taken as what is before the fullstop.\n" +
+                     "If the filename you entered was not valid the filename will be a unix time stamp.\n    " +
+                     " Filename: ")
     ## Now make sure that the user has not entered .txt or .csv so take everyhting before the '.'(if there is a '.' in the string)
     partionedString = fileName.partition('.')
     fileName = partionedString[0]
@@ -167,8 +203,19 @@ if(validPath == True):
     filesDir = os.path.join(currentDir, fileName) 
     
     ## Now write data to the newly created excel file
-    df.to_excel(filesDir)
-    
+    try:
+        df.to_excel(filesDir)
+    except:
+        ## There will be an exception if the user entered an invalid filename like ""44 
+        print("\nWarning: Invalid filename")
+        fileName = "Data"
+        unixTimeStamp = round(time.time()) ## Need to round the unix time stamp as can't have a decimal place in a file name 
+        fileName = fileName + str(unixTimeStamp) ## Will give something like: Data1617719371
+        ## The file will be saved as an xlsx
+        fileName = fileName + ".xlsx"
+        filesDir = os.path.join(currentDir, fileName)
+        df.to_excel(filesDir)
+        
     print("\nThe dataset has been saved as an xlsx file called", fileName, "in your local working directory." + "\n" +
           "Path: " + filesDir)
     
