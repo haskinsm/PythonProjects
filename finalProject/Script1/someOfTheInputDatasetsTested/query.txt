@@ -1,0 +1,532 @@
+{
+  "objectIdFieldName" : "OBJECTID", 
+  "uniqueIdField" : 
+  {
+    "name" : "OBJECTID", 
+    "isSystemMaintained" : true
+  }, 
+  "globalIdFieldName" : "", 
+  "fields" : [
+    {
+      "name" : "OBJECTID", 
+      "type" : "esriFieldTypeOID", 
+      "alias" : "OBJECTID", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "OBJECTID_1", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "OBJECTID", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "AreaID", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "AreaID", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "RegionID", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "RegionID", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "Area", 
+      "type" : "esriFieldTypeString", 
+      "alias" : "Area", 
+      "sqlType" : "sqlTypeOther", 
+      "length" : 8000, 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "Year", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "Year", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "Jan", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "Jan", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "Feb", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "Feb", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "Mar", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "Mar", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "Apr", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "Apr", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "May", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "May", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "Jun", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "Jun", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "Jul", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "Jul", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "Aug", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "Aug", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "Sep", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "Sep", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "Oct", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "Oct", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "Nov", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "Nov", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }, 
+    {
+      "name" : "Dec", 
+      "type" : "esriFieldTypeInteger", 
+      "alias" : "Dec", 
+      "sqlType" : "sqlTypeOther", 
+      "domain" : null, 
+      "defaultValue" : null
+    }
+  ], 
+  "features" : [
+    {
+      "attributes" : {
+        "OBJECTID" : 1, 
+        "OBJECTID_1" : 1, 
+        "AreaID" : 1, 
+        "RegionID" : 20, 
+        "Area" : "Carlow Kilkenny South Tipperary", 
+        "Year" : 2021, 
+        "Jan" : 620, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 2, 
+        "OBJECTID_1" : 2, 
+        "AreaID" : 2, 
+        "RegionID" : 19, 
+        "Area" : "Cavan Monaghan", 
+        "Year" : 2021, 
+        "Jan" : 430, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 3, 
+        "OBJECTID_1" : 3, 
+        "AreaID" : 3, 
+        "RegionID" : 20, 
+        "Area" : "Cork", 
+        "Year" : 2021, 
+        "Jan" : 1880, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 4, 
+        "OBJECTID_1" : 4, 
+        "AreaID" : 4, 
+        "RegionID" : 21, 
+        "Area" : "Donegal", 
+        "Year" : 2021, 
+        "Jan" : 485, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 5, 
+        "OBJECTID_1" : 5, 
+        "AreaID" : 5, 
+        "RegionID" : 19, 
+        "Area" : "Dublin North", 
+        "Year" : 2021, 
+        "Jan" : 2063, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 6, 
+        "OBJECTID_1" : 6, 
+        "AreaID" : 6, 
+        "RegionID" : 19, 
+        "Area" : "Dublin City North", 
+        "Year" : 2021, 
+        "Jan" : 1391, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 7, 
+        "OBJECTID_1" : 7, 
+        "AreaID" : 7, 
+        "RegionID" : 18, 
+        "Area" : "Dublin South Central", 
+        "Year" : 2021, 
+        "Jan" : 924, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 8, 
+        "OBJECTID_1" : 8, 
+        "AreaID" : 8, 
+        "RegionID" : 18, 
+        "Area" : "Dublin South East Wicklow", 
+        "Year" : 2021, 
+        "Jan" : 726, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 9, 
+        "OBJECTID_1" : 9, 
+        "AreaID" : 9, 
+        "RegionID" : 18, 
+        "Area" : "Dublin South West Kildare West Wicklow", 
+        "Year" : 2021, 
+        "Jan" : 1215, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 10, 
+        "OBJECTID_1" : 10, 
+        "AreaID" : 10, 
+        "RegionID" : 21, 
+        "Area" : "Galway Roscommon", 
+        "Year" : 2021, 
+        "Jan" : 976, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 11, 
+        "OBJECTID_1" : 11, 
+        "AreaID" : 11, 
+        "RegionID" : 20, 
+        "Area" : "Kerry", 
+        "Year" : 2021, 
+        "Jan" : 430, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 12, 
+        "OBJECTID_1" : 12, 
+        "AreaID" : 12, 
+        "RegionID" : 19, 
+        "Area" : "Louth Meath", 
+        "Year" : 2021, 
+        "Jan" : 1072, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 13, 
+        "OBJECTID_1" : 13, 
+        "AreaID" : 13, 
+        "RegionID" : 21, 
+        "Area" : "Mayo", 
+        "Year" : 2021, 
+        "Jan" : 269, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 14, 
+        "OBJECTID_1" : 14, 
+        "AreaID" : 14, 
+        "RegionID" : 21, 
+        "Area" : "The Midwest", 
+        "Year" : 2021, 
+        "Jan" : 1162, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 15, 
+        "OBJECTID_1" : 15, 
+        "AreaID" : 15, 
+        "RegionID" : 18, 
+        "Area" : "The Midlands", 
+        "Year" : 2021, 
+        "Jan" : 1034, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 16, 
+        "OBJECTID_1" : 16, 
+        "AreaID" : 16, 
+        "RegionID" : 21, 
+        "Area" : "Sligo Leitrim West Cavan", 
+        "Year" : 2021, 
+        "Jan" : 236, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }, 
+    {
+      "attributes" : {
+        "OBJECTID" : 17, 
+        "OBJECTID_1" : 17, 
+        "AreaID" : 17, 
+        "RegionID" : 20, 
+        "Area" : "Waterford Wexford", 
+        "Year" : 2021, 
+        "Jan" : 1276, 
+        "Feb" : null, 
+        "Mar" : null, 
+        "Apr" : null, 
+        "May" : null, 
+        "Jun" : null, 
+        "Jul" : null, 
+        "Aug" : null, 
+        "Sep" : null, 
+        "Oct" : null, 
+        "Nov" : null, 
+        "Dec" : null
+      }
+    }
+  ]
+}
