@@ -4,6 +4,8 @@ Created on Thu Mar 18 12:54:53 2021
 
 @author: micha
 """
+# !git remote add origin https://github.com/haskinsm/PythonProjects.git
+# !git remote -v ##checks origin
 
 # !git add "addition.py"
 # !git commit -m "2nd Commit"
@@ -18,3 +20,5 @@ Created on Thu Mar 18 12:54:53 2021
 
 #git branch -f remote_branch_name origin/remote_branch_name
 #git checkout remote_branch_name
+
+# !git switch <existing_branch>
