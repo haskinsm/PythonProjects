@@ -4,6 +4,13 @@ Created on Thu Mar 18 12:54:53 2021
 
 @author: micha
 """
+##################################################################################
+########################### Easier to just use GitHub Desktop ####################
+##################################################################################
+
+
+
+
 # !git remote add origin https://github.com/haskinsm/PythonProjects.git
 # !git remote -v ##checks origin
 
