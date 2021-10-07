@@ -9,7 +9,8 @@ Created on Thu Mar 18 12:54:53 2021
 
 # !git add "addition.py"
 # !git commit -m "2nd Commit"
-# !git push origin main
+# !git push origin master
+# !git push origin master -f  ##Dont use force
 # !git branch
 
 # !git fetch origin master

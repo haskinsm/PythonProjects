@@ -30,7 +30,7 @@ car_details
 
 
 
-cust_details = {} ## initiate empty list
+cust_details = {} ## initiate empty Dictionary
 comp = input("Please enter your company: ")
 name = input("Please enter your name: ")
 email = input("Please enter your email: ")

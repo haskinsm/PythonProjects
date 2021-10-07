@@ -95,7 +95,7 @@ a_list[0:2]
 a_list[:4]
 a_list[2:]
 a_list[-4:] ## Negative slices relative to end of list
-
+a_list[:-2] ## Everything but the last two elements
 
 
 strings = ['a', 'as', 'bat', 'car', 'like', 'sweet']
@@ -105,7 +105,7 @@ strings = ['a', 'as', 'bat', 'car', 'like', 'sweet']
         
 
 
-dimensions = (200,50)
+dimensions = (200,50) ## Tuple cant alter once created
 dimensions[0]
 
 

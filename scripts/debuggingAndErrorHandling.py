@@ -45,7 +45,7 @@ else:
 try: 
     print(5/0) ##Obv can't divide by zero so expect error traceback but 
     # with excpetion handling this wont kill the entire program
-except ZeroDivisionError: ## I belive there are a number of named errors that you can handle
+except ZeroDivisionError: ## I believe there are a number of named errors that you can handle
     print("You can't divide by zero!")
     
     

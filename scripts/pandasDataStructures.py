@@ -182,8 +182,41 @@ pd.pivot_table(lens, values = 'rating', index = ['age', 'movie_id'], aggfunc = n
 
 
 
+## Practice with Series -> Get 2nd lowest scorer
+import pandas as pd
+name = ["Adam", "Charlie", "Tom", "Eileen", "Scott"]
+score = [44.5, 44.5, 50, 50, 60]
+      
+ser = pd.Series(score, index = name)
+z = ser.min()
+while z == ser.min():
+    ser.drop(ser[ser==z].index[0], inplace=True) ## Otherwise will loop infinitely, indiactes that I want to change existing series
+    ## ser[ser==z].index[0] -> Gets index of first occurence of value == z
+result = ""
+x = ser.min()
+while x == ser.min():
+    result += "" + ser[ser==x].index[0] +"\n"
+    ser.drop(ser[ser==x].index[0], inplace=True)
+print(result)
 
 
+## Also works (If you had a stream of input) 
+d={} #Empty Dict
+for _ in range(int(input())): #range for number of students
+    Name=input() 
+    Grade=float(input()) 
+    d[Name]=Grade #Key = Name, Value = Grade
+    
+v=d.values() #Store values/test scores here
+second=sorted(list(set(v)))[1] #Remove duplicate grades using set data type and take 2nd lowest grade from sorted list
 
+second_lowest=[] 
+for key,value in d.items():  ## Get names of students who scored 2nd lowest
+    if value==second: 
+        second_lowest.append(key) 
+        
+second_lowest.sort() 
+for name in second_lowest: #Now print the names of the students 
+    print (name) 
 
 
