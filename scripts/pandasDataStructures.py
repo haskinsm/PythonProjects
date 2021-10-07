@@ -4,6 +4,9 @@ Created on Tue Mar 23 19:42:38 2021
 
 @author: micha
 """
+## Below two lines are list comprehension
+strings = ['a','as','bat', 'car', 'like', 'sweeet']
+[newStrings.upper() for newStrings in strings if len(newStrings)>2 ] ### Note the if condition must contain the var after for 
 
 # Next to Matplotlib and NumPy, pandas is one of the most widely used Python libraries in data 
 # science. The pandas library contains high-level data structures and manipulation tools to make 
