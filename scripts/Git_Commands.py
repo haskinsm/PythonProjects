@@ -8,6 +8,8 @@ Created on Thu Mar 18 12:54:53 2021
 ########################### Easier to just use GitHub Desktop ####################
 ##################################################################################
 
+## Also to generate a requeirements.txt do 
+# pip freeze > requirements.txt
 
 
 

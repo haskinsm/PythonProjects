@@ -41,6 +41,7 @@ JSONContent = res.json()
 content = json.dumps(JSONContent, indent = 4, sort_keys = True)
 ### Now create a Pandas df from the JSON
 jsonData = json.loads(content) ## Change the (JSON) string into a JSON object that can be read into a pd df
+#jsonData object above is now a pandas dict 
 test_df = pd.DataFrame.from_dict(jsonData)
 
 # Can also see headers if you want
@@ -49,6 +50,41 @@ res.headers['content-type']
 res.encoding
 res.text
 res.json()
+
+
+
+
+##################### More HTTP GET Request #################
+'''
+You often want to send some sort of data in the URL’s query string. If you were 
+constructing the URL by hand, this data would be given as key/value pairs in the 
+URL after a question mark, e.g. httpbin.org/get?key=val. Requests allows you to 
+provide these arguments as a dictionary of strings, using the params keyword argument.
+As an example, if you wanted to pass key1=value1 and key2=value2 to httpbin.org/get, 
+you would use the following code:
+'''
+
+payload = {'key1': 'value1', 'key2': 'value2'}
+r = requests.get('https://httpbin.org/get', params=payload)
+# You can see that the URL has been correctly encoded by printing the URL:
+print(r.url)
+## ==> https://httpbin.org/get?key2=value2&key1=value1
+
+# Note that any dictionary key whose value is None will not be added to the URL’s
+# query string.
+
+# You can also pass a list of items as a value:
+payload = {'key1': 'value1', 'key2': ['value2', 'value3']}
+r = requests.get('https://httpbin.org/get', params=payload)
+print(r.url)
+
+#### This stuff is important as often need to pass in things like API key
+payload = {'userKey': 'ffce024f79c824a16a38260b5178'} ##i.e. The API key
+r = requests.get('https://candidate.hubteam.com/candidateTest/v3/problem/dataset', params=payload)
+print(r.url)
+# ==> https://candidate.hubteam.com/candidateTest/v3/problem/dataset?userKey=ffce024f79c824a16a38260b5178
+
+
 
 
 
@@ -218,39 +254,10 @@ r = requests.post(url, json=payload)
 # Using the json parameter in the request will change the Content-Type in the
 # header to application/json.
 
+#Also can do 
+r = requests.post('https://httpbin.org/post', data={'key': 'value'})
 
-
-
-
-##################### More HTTP GET Request #################
-'''
-You often want to send some sort of data in the URL’s query string. If you were 
-constructing the URL by hand, this data would be given as key/value pairs in the 
-URL after a question mark, e.g. httpbin.org/get?key=val. Requests allows you to 
-provide these arguments as a dictionary of strings, using the params keyword argument.
-As an example, if you wanted to pass key1=value1 and key2=value2 to httpbin.org/get, 
-you would use the following code:
-'''
-
-payload = {'key1': 'value1', 'key2': 'value2'}
-r = requests.get('https://httpbin.org/get', params=payload)
-# You can see that the URL has been correctly encoded by printing the URL:
-print(r.url)
-## ==> https://httpbin.org/get?key2=value2&key1=value1
-
-# Note that any dictionary key whose value is None will not be added to the URL’s
-# query string.
-
-# You can also pass a list of items as a value:
-payload = {'key1': 'value1', 'key2': ['value2', 'value3']}
-r = requests.get('https://httpbin.org/get', params=payload)
-print(r.url)
-
-#### This stuff is important as often need to pass in things like API key
-payload = {'userKey': 'ffce024f79c824a16a38260b5178'} ##i.e. The API key
-r = requests.get('https://candidate.hubteam.com/candidateTest/v3/problem/dataset', params=payload)
-print(r.url)
-# ==> https://candidate.hubteam.com/candidateTest/v3/problem/dataset?userKey=ffce024f79c824a16a38260b5178
+   
 
 
 
