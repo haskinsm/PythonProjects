@@ -45,9 +45,14 @@ def rev(arr):
 l=[1,2,3,4,5,6]
 a=0
 b=4
-c=[*l[0:a],*rev(l[a:b+1]),*l[b+1:]]
+c=[*l[0:a],*rev(l[a:b+1]),*l[b+1:]]  ## * is used to unpack the list
 print(c)
 
 rev(l[1:4])
+
+
+
+[*[1,2,3],*[1]] ## Note unpacked lists
+[[1,2,3],[1]] ## Note nested lists
 
 

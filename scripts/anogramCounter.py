@@ -41,3 +41,5 @@ def sherlockAndAnagrams(s):
 
 sherlockAndAnagrams("abba") ##==4 [a,a]  [ab, ba]   [b,b] [abb,bba]
 sherlockAndAnagrams("cdcd") ##=5
+
+
