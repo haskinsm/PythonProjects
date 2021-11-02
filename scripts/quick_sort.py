@@ -17,11 +17,13 @@ achieved when the pivot value splits the list in two almost equal halves.
 
 src: https://towardsdatascience.com/sorting-algorithms-with-python-4ec7081d78a1
 """
+import random 
 
 def quickSort(array):
     if len(array)> 1:
+        random.shuffle(array)  ## Shuffle in place, reduces chance of worst case 
         pivot=array.pop()
-        grtr_lst, equal_lst, smlr_lst = [], [pivot], []
+        grtr_lst, equal_lst, smlr_lst = [], [pivot], []  ## Note this is setting equal_lst = [pivot]   So the piv element is not lost 
         for item in array:
             if item == pivot:
                 equal_lst.append(item)
@@ -32,3 +34,9 @@ def quickSort(array):
         return (quickSort(smlr_lst) + equal_lst + quickSort(grtr_lst))
     else:
         return array
+    
+aList = [2,4,1,12,4,19,1,3,8,40,90,1,0]
+sortedArr = quickSort(aList)
+print(sortedArr)
+
+
