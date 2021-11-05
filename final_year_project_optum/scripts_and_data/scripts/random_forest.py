@@ -27,6 +27,7 @@ warnings.filterwarnings('ignore')
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.model_selection import KFold
+from sklearn import metrics
 
 # Files I've written
 import sklearn_helper as sklHelper #### Make sure your in the general directory for this to work
@@ -48,13 +49,15 @@ class RandomForest():
             - First being when just given a target var and whole dataset not broken up into training and test datasets
             - Second being when given target var, and a training and test dataset
         """
-        if len(args) == 2:
+        if len(args) == 3:
             self.targetVar = args[0]
             self.data = args[1]
-        elif len(args) == 3:
+            self.yTest = args[2]
+        elif len(args) == 4:
             self.targetVar = args[0]
             self.train = args[1]
             self.test = args[2]
+            self.yTest = args[3]
             
     def createModel(self):
         """ Function for creating random forest models"""
@@ -85,62 +88,51 @@ class RandomForest():
             'max_features' : 'sqrt',
             'verbose': 0
         }
-        rf = sklHelper.SklearnHelper(clf=RandomForestClassifier, seed=SEED, params=rf_params)
+        self.rfHelper = sklHelper.SklearnHelper(clf=RandomForestClassifier, seed=SEED, params=rf_params)
         
         # Create Numpy arrays of train, test and target ( Survived) dataframes to feed into our models
-        y_train = self.train[self.targetVar].ravel() # ******************** Could pass this target var name in as an arg 
+        self.yTrain = self.train[self.targetVar].ravel() # ravel is used to change a 2-dimensional array or a multi-dimensional array into a contiguous flattened array 
         train = self.train.drop([self.targetVar], axis=1)
-        x_train = train.values   # Creates an array of the train data
-        x_test = self.test.values   # Creates an array of the test data
+        xTrain = train.values   # Creates an array of the train data
+        xTest = self.test.values   # Creates an array of the test data
         # Need to convert array to float 32 not default float 62
-        x_train = np.nan_to_num(x_train.astype(np.float32)) # This will convert everything to float 32 and if this results in inf they will be converted to max float 32
-        x_test = np.nan_to_num(x_test.astype(np.float32)) 
-         
-        # stacking uses predictions of base classifiers as input for training to a second-level model. 
-        # However one cannot simply train the base models on the full training data, generate predictions
-        # on the full test set and then output these for the second-level training. This runs the risk of your
-        # base model predictions already having "seen" the test set and therefore overfitting when feeding these
-        # predictions.
-        def get_oof(clf, x_train, y_train, x_test):
-            oof_train = np.zeros((ntrain,))
-            oof_test = np.zeros((ntest,))
-            oof_test_skf = np.empty((NFOLDS, ntest))
+        self.xTrain = np.nan_to_num(xTrain.astype(np.float32)) # This will convert everything to float 32 and if this results in inf they will be converted to max float 32
+        self.xTest = np.nan_to_num(xTest.astype(np.float32)) 
         
-            for i, (train_index, test_index) in enumerate(kf.split(train)):
-                x_tr = x_train[train_index]
-                y_tr = y_train[train_index]
-                x_te = x_train[test_index]
+        ## Train the model using the training sets
+        self.rf = self.rfHelper.fit(self.xTrain, self.yTrain)
+        ## Make predictions using the model
+        self.yPred = self.rf.predict(self.xTest) 
         
-                clf.train(x_tr, y_tr)
+    def modelAccuracy(self):
+        ## After training, check the accuracy using actual and predicted values.
+        return (metrics.accuracy_score(self.yTest, self.yPred)) #*************************************************
         
-                oof_train[test_index] = clf.predict(x_te)
-                oof_test_skf[i, :] = clf.predict(x_test)
-        
-            oof_test[:] = oof_test_skf.mean(axis=0)
-            return oof_train.reshape(-1, 1), oof_test.reshape(-1, 1)
-        
-        # Create our OOF train and test predictions. These base results will be used as new features
-        rf_oof_train, rf_oof_test = get_oof(rf,x_train, y_train, x_test)
+    def featureImportance(self):
         
         # Feature importances generated from the different classifiers
         # Now having learned our the first-level classifiers, we can utilise a very nifty feature of the 
         # Sklearn models and that is to output the importances of the various features in the training and
         # test sets with one very simple line of code.
         # As per the Sklearn documentation, most of the classifiers are built in with an attribute which returns feature importances by simply typing in .featureimportances.
-        rf_feature = rf.feature_importances(x_train,y_train)
-        rf_features=list(rf_feature)
+       
+        # The importance of a feature is computed as the (normalized) total reduction of the criterion 
+        # brought by that feature. It is also known as the Gini importance.
+        rfFeature = self.rfHelper.feature_importances(self.xTrain, self.yTrain)
+        rfFeatures=list(rfFeature)
 
+        train = self.train.drop([self.targetVar], axis=1)
         cols = train.columns.values
         # Create a dataframe with features
-        feature_dataframe = pd.DataFrame( {'features': cols,
-             'Random Forest feature importances': rf_features
+        featureDataframe = pd.DataFrame( {'features': cols,
+             'Random Forest feature importances': rfFeatures
              })
         
         
         # Scatter plot 
         trace = go.Scatter(
-            y = feature_dataframe['Random Forest feature importances'].values,
-            x = feature_dataframe['features'].values,
+            y = featureDataframe['Random Forest feature importances'].values,
+            x = featureDataframe['features'].values,
             mode='markers',
             marker=dict(
                 sizemode = 'diameter',
@@ -148,11 +140,11 @@ class RandomForest():
                 size = 25,
                 # size= feature_dataframe['AdaBoost feature importances'].values,
                 # color = np.random.randn(500), #set color equal to a variable
-                color = feature_dataframe['Random Forest feature importances'].values,
+                color = featureDataframe['Random Forest feature importances'].values,
                 colorscale='Portland',
                 showscale=True
             ),
-            text = feature_dataframe['features'].values
+            text = featureDataframe['features'].values
         )
         data = [trace]
         layout= go.Layout(
@@ -174,5 +166,10 @@ class RandomForest():
         )
         fig = go.Figure(data=data, layout=layout)
         #py.iplot(fig,filename='scatter2010')
-        fig.show() #############******************************************Problem
+        
+        # automatically open plot in local window (google chrome for me)
+        fig.write_html('random_forest_feature_importance_figure.html', auto_open=True)
+        # get plot to appear in plot window
+        #fig.show(renderer="png")
+        return (fig) #############******************************************Problem
 

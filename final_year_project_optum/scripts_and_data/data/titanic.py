@@ -45,8 +45,12 @@ class Titanic():
     trainFilesDir = os.path.join(currentDir, 'scripts_and_data\\data\\datasets\\titanic_data\\train.csv')
     train = pd.read_csv(trainFilesDir)
     
+    # Now get y_test (the targte var for the test data)
+    yTestFilesDir = os.path.join(currentDir, 'scripts_and_data\\data\\datasets\\titanic_data\\y_test.csv')
+    yTest = pd.read_csv(yTestFilesDir)
     
     ############################ Check data ###################################
+    """
     train.head(3)
     train.info()  # Age, Embarked contain null values
     train.describe()
@@ -54,6 +58,11 @@ class Titanic():
     test.head(3)
     test.info() # Age, Fare contain null values
     test.describe()
+
+    yTest.head(3)
+    """
+   
+    yTest.drop(['PassengerId'], axis=1, inplace=True)
     
     ############################ Manipulate Data #############################
     # Will convert the Cabin field to a binary field where 0 represents no cabin and 1 represents having a cabin.
@@ -126,6 +135,7 @@ class Titanic():
     sns.heatmap(train[columns].astype(float).corr(),linewidths=0.1,vmax=1.0, 
                 square=True, cmap=colormap, linecolor='white', annot=True)
     
+    
     ######## Pairplot -> see dist from one feature to another
     g = sns.pairplot(train[[u'Survived', u'Pclass', u'Sex', u'Age', u'SibSp', u'Parch', u'Fare', u'Embarked', u'Has_Cabin', u'Title']],
                      hue='Survived', palette = 'seismic',size=1.2,diag_kind = 'kde',diag_kws=dict(shade=True),plot_kws=dict(s=10) )
@@ -133,10 +143,11 @@ class Titanic():
     
     
     
-    ###################### Set target var as a cosnt #######################
+    ###################### Set vars that will be accessed later as constants #######################
     TARGET_VAR_NAME = "Survived"
     TRAIN = train
     TEST = test 
+    YTEST = yTest
 
 
 

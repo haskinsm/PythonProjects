@@ -18,9 +18,11 @@ import scripts_and_data
 rf = scripts_and_data.scripts.random_forest
 data = scripts_and_data.data.titanic.Titanic
 
-rfObj = rf.RandomForest(data.TARGET_VAR_NAME, data.TRAIN, data.TEST)
-model = rfObj.createModel()
+rfObj = rf.RandomForest(data.TARGET_VAR_NAME, data.TRAIN, data.TEST, data.YTEST)
+rfObj.createModel()
+rfAccuracy = rfObj.modelAccuracy()
+rfFeatureImpPlot = rfObj.featureImportance()
+rfFeatureImpPlot.show(renderer="png")
 
 
-
-
+##
