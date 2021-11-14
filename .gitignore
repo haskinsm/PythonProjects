@@ -4,3 +4,5 @@ final_year_project_optum/scripts_and_data/data/datasets/credit_card_fraud.csv
 final_year_project_optum/scripts_and_data/data/datasets/heart.csv
 final_year_project_optum/scripts_and_data/data/datasets/eu_vaccine_data.csv
 final_year_project_optum/scripts_and_data/data/datasets/heart_disease_description.txt
+final_year_project_optum/scripts_and_data/data/datasets/heart_attack.csv
+final_year_project_optum/random_forest_feature_importance_figure.html
