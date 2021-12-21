@@ -92,7 +92,7 @@ class Titanic():
     train['Embarked'] = train['Embarked'].fillna("{}".format(embMajority[0]))
     
     # Define function to extract titles from passenger names
-    def get_title(name):
+    def getTitle(name):
         title_search = re.search(' ([A-Za-z]+)\.', name)
         # If the title exists, extract and return it.
         if title_search:
@@ -101,7 +101,7 @@ class Titanic():
     
     # Create a new feature Title, containing the titles of passenger names
     for dataset in fullData:
-        dataset['Title'] = dataset['Name'].apply(get_title)
+        dataset['Title'] = dataset['Name'].apply(getTitle)
         
     # Group all non-common titles into one single grouping "Rare"
     for dataset in fullData:
@@ -124,6 +124,10 @@ class Titanic():
         # Mapping Embarked
         dataset['Embarked'] = dataset['Embarked'].map( {'S': 0, 'C': 1, 'Q': 2} ).astype(int)
     
+    ######################## Create a whole dataframe with train,test,and yTest ####################
+    tempTest = pd.concat([test, yTest], axis=1)    
+    fullDataset = pd.concat([train, tempTest], ignore_index=True)
+    
     
     ######################## Some interesting plots ###########################
     ######## Correaltion heatmap
@@ -140,14 +144,16 @@ class Titanic():
     g = sns.pairplot(train[[u'Survived', u'Pclass', u'Sex', u'Age', u'SibSp', u'Parch', u'Fare', u'Embarked', u'Has_Cabin', u'Title']],
                      hue='Survived', palette = 'seismic',size=1.2,diag_kind = 'kde',diag_kws=dict(shade=True),plot_kws=dict(s=10) )
     g.set(xticklabels=[])
-    
-    
+        
     
     ###################### Set vars that will be accessed later as constants #######################
     TARGET_VAR_NAME = "Survived"
     TRAIN = train
     TEST = test 
     YTEST = yTest
+    FULLDATASET = fullDataset
+    
+    
 
 
 
