@@ -8,25 +8,20 @@ description: This is where the orginal water pump dataset is read in and data ma
 """
 
 import pandas as pd 
-import numpy as np
 import os
-from sklearn import preprocessing
-from sklearn.model_selection import train_test_split
-#from fast_ml.model_development import train_valid_test_split
-from sklearn.compose import ColumnTransformer
 
 
 ############################ Read in data #################################
 # Change to correct directory 
-correctDirPath = "C:/Users/micha/Documents/3rd year/Software Applications/PythonSpyder(Anaconda V)/final_year_project_optum"
-os.chdir(correctDirPath)
+CORRECTDIR = "C:/Users/micha/Documents/3rd year/Software Applications/PythonSpyder(Anaconda V)/final_year_project_optum"
+os.chdir(CORRECTDIR)
 
 # Append name of file you want to read to the current directory
-datasFilePath = os.path.join(correctDirPath, "scripts_and_data\\data\\datasets\\water_pump_data\\training_set.csv")
+datasFilePath = os.path.join(CORRECTDIR, "scripts_and_data\\data\\datasets\\water_pump_data\\training_set.csv")
 # read in data (in this case the labels could only be downloaded seperately)
-dataValues = pd.read_csv(datasFilePath, parse_dates = ['date_recorded'])  
+dataValues = pd.read_csv(datasFilePath)  
 # read in labels
-labelsFilePath = os.path.join(correctDirPath, "scripts_and_data\\data\\datasets\\water_pump_data\\training_set_labels.csv")
+labelsFilePath = os.path.join(CORRECTDIR, "scripts_and_data\\data\\datasets\\water_pump_data\\training_set_labels.csv")
 dataLabels = pd.read_csv(labelsFilePath) # this contains the vars ID and the target variable status_group 
 
 
@@ -88,14 +83,25 @@ data['construction_year'] = data['construction_year'] - 1959
 
 ######################## Further data manipultaion ############################
 
+######## Change the date_recorded variable to two variables month_recorded and year_recorded and then drop date_recorded
+def stripMonthYear(row):
+    date = row['date_recorded']
+    date = date.split('/')
+    month = date[1]
+    year = date[2]
+    return (month, year)
+data['month'], data['year'] = data.apply(lambda row: stripMonthYear(row), axis = 1, result_type = 'expand').T.values
+data.drop('date_recorded', axis = 1, inplace = True) 
+
+"""
+### Will prob remove this section 
 # The target variable contrains 3 levels:P functional, non-functional and needs repair 
 # I will create another variable called repair which will indicate if a water pump needs to be repaired
 # 0 will indicate no repair needed, 1 will indicate repair needed. I will give non-functional water pumps 
 # a repair value of 1 
 ## Think I may have made this too influential on the outcome so may need to be changed*****************************************
-"""
-### Will prob remove this section 
-def repair_labels(row):
+
+def repairLabels(row):
     if row['status_group'] == 'functional':
         return 0
     if row['status_group'] == 'functional needs repair':
@@ -103,26 +109,22 @@ def repair_labels(row):
     if row['status_group'] == 'non functional':
         return 1
     return 'Other'
-data['repair'] = data.apply(lambda row: repair_labels(row), axis = 1)
+data['repair'] = data.apply(lambda row: repairLabels(row), axis = 1)
 """
 
-def response_labels(row):
+def responseLabels(row):
     if row['status_group'] == 'non functional':
         return 0
     else:
         return 1
-data['status_group'] = data.apply(lambda row: response_labels(row), axis = 1)
+data['status_group'] = data.apply(lambda row: responseLabels(row), axis = 1)
 
-"""
-### Remove this if remove repair var 
-# Switch position of columns repair and status_group so status_group is last (it is the response variable) 
-colList = list(data)
-colLength = len(colList)
-colList[colLength - 2], colList[colLength - 1] = colList[colLength - 1], colList[colLength - 2]
-data.columns = colList
-"""
 
-    
+# Switch position of columns so the target variable status_group is last 
+cols = data.columns.tolist()
+cols = cols[:-3] + cols[-2:] + cols[-3:-2] # concantenate col name froms 0->30 and 32->33 and then 31 to get target variable last 
+data = data[cols]
+
 
 ######## The location variables
 # There are variables recording the longitude and latitude, these variables will likely provide enough information to 
@@ -131,14 +133,15 @@ data.columns = colList
 
 
 ######################### Convert categorical variables to be ordinal using OrdinalEncoder or nominal using OneHotEncoder ####################
-#### using OneHotEncoder for Nominal data and OrdinalEncoddr for ordianl data
+#### using get_dummies for Nominal data and OrdinalEncoder for ordianl data
 
 # While the variable quantity appears to be semi ordinal there is not enough information to warrent encoding
 # it as ordinal as it is unclear what order to put 'seasonal', 'unknown', 'dry', 'enough' , 'insufficient' in
 
-XNom = data.iloc[:, [2,4,7,8,9,10,11,12,14,15,17,18,19,20,21,22,23,24,25,26,27,28,29]].astype(str)
-XCont = data.iloc[:, [0,1,3,5,6,13,16]].astype(str)
+XNom = data.iloc[:, [1,3,6,7,8,9,10,11,13,14,16,17,18,19,20,21,22,23,24,25,26,27,28]].astype(str)
+XCont = data.iloc[:, [0,2,4,5,12,15,29,30]].astype(str)
 y = pd.DataFrame(data.iloc[:, -1].astype(str))
+
 #onehotEnc = preprocessing.OneHotEncoder()
 #C = pd.DataFrame(onehotEnc.fit_transform(C).toarray()) # No column names 
 
@@ -149,7 +152,7 @@ encData = pd.concat([pd.concat([XCont, XNomDumDf], axis = 1), y], axis = 1)
 
 #################### Now save as a csv file ####################
 # This csv file will be read in in water_pump_dataset.py 
-csvFilePath = os.path.join(correctDirPath, "scripts_and_data\\data\\datasets\\water_pump_data\\processed_data.csv")
+csvFilePath = os.path.join(CORRECTDIR, "scripts_and_data\\data\\datasets\\water_pump_data\\processed_data.csv")
 encData.to_csv(csvFilePath, header = True, index = True)
 
 
