@@ -44,6 +44,6 @@ class WaterPump():
     del xTest
     del yTest
     del xValid
-    del yValid 
+    del yValid
     del data 
     

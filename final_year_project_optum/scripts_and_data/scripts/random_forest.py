@@ -103,6 +103,13 @@ class RandomForest():
         
         ## Train the model using the training sets
         self.rf = self.rfHelper.fit(self.xTrain, self.yTrain)
+        
+        
+        ### Delete no longer needed vars from memory 
+        del train 
+        del xTrain
+        del xTest
+        del rf_params 
      
         
     def modelAccuracy(self):
@@ -111,6 +118,7 @@ class RandomForest():
         yTestPred = self.rf.predict(self.xTest) 
         ## Return the accuracy of the model when applied to the test set 
         return (metrics.accuracy_score(self.yTest, yTestPred)) 
+    
     
     def validAccuracy(self):
         """ Return decimal accuracy of random forest model when applied to the Validation set """ 
@@ -184,5 +192,10 @@ class RandomForest():
         fig.write_html('random_forest_feature_importance_figure.html', auto_open=True)
         # get plot to appear in plot window
         #fig.show(renderer="png")
+        
+        ### Delete no longer needed vars from memory 
+        del train 
+        del data 
+        
         return (fig) #############******************************************Problem
 

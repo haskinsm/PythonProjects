@@ -46,7 +46,9 @@ data.drop('scheme_name', axis = 1, inplace = True)
 ##### Remove duplicate and very similar variables
 data.drop('payment', axis = 1, inplace = True) # Duplicate of payment_type
 data.drop('quantity_group', axis = 1, inplace = True) # Duplicate of quantity
-data.drop('extraction_type', axis = 1, inplace = True) # Duplicate of extraction_type_group
+data.drop('extraction_type', axis = 1, inplace = True) # Duplicate of extraction_type_class
+data.drop('extraction_type_group', axis = 1, inplace = True) # Duplicate of extraction_type_class
+data.drop('waterpoint_type_group', axis = 1, inplace = True) # Duplicate of waterpoint_type (minor difference in it provides one level less of detail on communal standpipes)
 
 # The variable recorded_by only contains one value, so it is useless information 
 data.drop('recorded_by', axis = 1, inplace = True)
@@ -61,11 +63,21 @@ data.drop('wpt_name', axis = 1, inplace = True) ##37,400 unique values -> this i
 data.drop('subvillage', axis = 1, inplace = True) #19,288 unique values
 data.drop('num_private', axis = 1, inplace = True) # 98.7% are 0
 data.drop('public_meeting', axis = 1, inplace = True) #2146 unique values
+data.drop('ward', axis = 1, inplace = True) #2092 unique values
+data.drop('funder', axis = 1, inplace = True) #1897 unique values
+data.drop('installer', axis = 1, inplace = True) #2145 unique values 
+
+##### The location variables
+# There are variables recording the longitude and latitude, region, region code, district_code, lqa, gps height, basin, ward
+# The variables region, region_code and distrcit_code displays the same info 
+data.drop('region_code', axis = 1, inplace = True)
+data.drop('district_code', axis = 1, inplace = True)
+
 
 ########################## Deal with missing data ######################################
 # give nan values sensible values
-data['funder'] = data['funder'].fillna('unknown') #unknown
-data['installer'] = data['installer'].fillna('unknown') #unknown
+#data['funder'] = data['funder'].fillna('unknown') #unknown
+#data['installer'] = data['installer'].fillna('unknown') #unknown
 data['scheme_management'] = data['scheme_management'].fillna('unknown') #unknown
 data['permit'] = data['permit'].fillna(data['permit'].median()) #median
 
@@ -126,10 +138,7 @@ cols = cols[:-3] + cols[-2:] + cols[-3:-2] # concantenate col name froms 0->30 a
 data = data[cols]
 
 
-######## The location variables
-# There are variables recording the longitude and latitude, these variables will likely provide enough information to 
-# account for location of a water pump and so the variables district_code, region, region_code, subvillage and ward may 
-# not be useful, but for now I will leave them in
+
 
 
 ######################### Convert categorical variables to be ordinal using OrdinalEncoder or nominal using OneHotEncoder ####################
@@ -138,8 +147,8 @@ data = data[cols]
 # While the variable quantity appears to be semi ordinal there is not enough information to warrent encoding
 # it as ordinal as it is unclear what order to put 'seasonal', 'unknown', 'dry', 'enough' , 'insufficient' in
 
-XNom = data.iloc[:, [1,3,6,7,8,9,10,11,13,14,16,17,18,19,20,21,22,23,24,25,26,27,28]].astype(str)
-XCont = data.iloc[:, [0,2,4,5,12,15,29,30]].astype(str)
+XNom = data.iloc[:, [4,5,6,8,9,11,12,13,14,15,16,17,18,19,20,21]].astype(str)
+XCont = data.iloc[:, [0,1,2,3,7,10,22,23]].astype(str)
 y = pd.DataFrame(data.iloc[:, -1].astype(str))
 
 #onehotEnc = preprocessing.OneHotEncoder()
