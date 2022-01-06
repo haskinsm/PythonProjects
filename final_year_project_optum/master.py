@@ -38,10 +38,10 @@ rfFeatureImpPlot.show(renderer="png") # render plot of feature importance
 ######### WaterPump (wp) Dataset ##########
 ##### Random Forest
 # create shorter reference
-wpRf = scripts_and_data.scripts.random_forest # reference of script WaterPump
+rf = scripts_and_data.scripts.random_forest # reference of script random_forest
 wpData = scripts_and_data.data.water_pump_dataset.WaterPump # reference of class WaterPump 
 # create instance of random forest class 
-wpRfObj = wpRf.RandomForest(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
+wpRfObj = rf.RandomForest(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
 wpRfObj.createModel() # train the model
 wpRfAccuracy = wpRfObj.modelAccuracy() # get model accuracy 
 wpRfFeatureImpPlot = wpRfObj.featureImportance() # get plot of feature importance 
@@ -87,8 +87,8 @@ def insertingNoise(data, noisePerc):
 
     """
     if( noisePerc > 100 or noisePerc < 0):
-        print("Error: You cant have a noise percentage in excess of 100. Please try again")
-        return 
+        print("Error: You cant have a noise percentage in excess of 100 or below 0. Please try again")
+        return 0
     
     # get number of obs target avlues to change
     numObs = len(data) 
@@ -131,18 +131,50 @@ noiseXTest, noiseYTest = insertingNoiseTestSet(wpData.XTEST, wpData.YTEST, 1)
 
 
 ## Now write functions to add noise over a specified range, and then plot the resulting change in accuracy 
+
+def rfNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
+    """
+    This function should take in the dataRef (being a refernece to a data class, e.g. wpData is an abbrevated version of the ref to the WaterPump data class
+    where wpData = scripts_and_data.data.water_pump_dataset.WaterPump), should take in the noiseStart and noiseEnd values, and the integer noise increments.
+    If an error occurs 0 is returned.
+    """
+    if( noiseStartPerc > 100 or noiseStartPerc < 0 or noiseEndPerc > 100 or noiseEndPerc < 0):
+        print("Error: You cant have a noise percentage in excess of 100 or below 0. Please try again")
+        return 0
+    elif(noiseStartPerc > noiseEndPerc):
+        print("Error: You cant have a noise end percentage less than the noise start percentage. Please try again")
+        return 0
+    elif(isinstance(numNoiseIncrements, int) == False):
+        print("Error: please enter an integer noiseIncrements value")
+        return 0
+   
+    accuracy = []
+    noiseLevelPerc = []
+    train = dataRef.TRAIN 
+    xTest = dataRef.XTEST
+    yTest = dataRef.YTEST
+    rf = scripts_and_data.scripts.random_forest # reference to random_forest script
+    
+    noiseIncrements = round((noiseEndPerc - noiseStartPerc)/numNoiseIncrements)
+    for x in range(noiseStartPerc, noiseEndPerc, noiseIncrements):
+        train = insertingNoise(dataRef.TRAIN, x)
+        xTest, yTest = insertingNoiseTestSet(dataRef.XTEST, dataRef.YTEST, x)
+        
+        rfObj = rf.RandomForest(dataRef.TARGET_VAR_NAME, train, xTest, yTest, dataRef.XVALID, dataRef.YVALID)
+        rfObj.createModel() # train the model
+        rfAccuracy = rfObj.modelAccuracy() # get model accuracy 
+        accuracy.append(rfAccuracy)
+        noiseLevelPerc.append(x)
+    
+    return accuracy, noiseLevelPerc
+        
+        
+a, b = rfNoiseEffect(wpData, 0, 15, 15)
     
     
+ 
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
+     
     
     
     
