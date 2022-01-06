@@ -189,7 +189,7 @@ class RandomForest():
         #py.iplot(fig,filename='scatter2010')
         
         # automatically open plot in local window (google chrome for me)
-        fig.write_html('random_forest_feature_importance_figure.html', auto_open=True)
+        # fig.write_html('random_forest_feature_importance_figure.html', auto_open=True) # this works
         # get plot to appear in plot window
         #fig.show(renderer="png")
         
@@ -197,5 +197,5 @@ class RandomForest():
         del train 
         del data 
         
-        return (fig) #############******************************************Problem
+        return (fig) 
 

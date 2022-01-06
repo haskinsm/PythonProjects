@@ -95,12 +95,12 @@ def insertingNoise(data, noisePerc):
     numToChange = round(numObs * noisePerc/100)
     # randomly select the number of rows from the dataframe (without replacement)
     toChangeDf = data.sample(n=numToChange) # add replace = True for replacement sampling 
-    # Create a df of rest of the data 
-    restDf = toChangeDf.merge(data, how = "right", indicator = True) # This will create a copy of data, with the added 
-    # column _merge, which will have values right_only for values not in the toChangeDf. These are the values I want
-    # as these represent values that are not in the subset toChangeDf
-    restDf = restDf.loc[restDf['_merge'] == 'right_only', ].iloc[:,:-1]
     
+    ### Create a df of rest of the data 
+    toChangeIndex = toChangeDf.index # get index of observations that noise will be inserted into 
+    # remove observations with these indexes
+    restDf = data.copy() # create copy so original is not overwitten 
+    restDf.drop(toChangeIndex, inplace=True)
     
     def changeTargetValue(row):
         targetValue = row[-1]
@@ -113,26 +113,24 @@ def insertingNoise(data, noisePerc):
     toChangeDf.iloc[:,-1] = toChangeDf.apply(lambda row: changeTargetValue(row), axis = 1)
     noiseDf = pd.DataFrame(toChangeDf)
     
-    # Create df of rest of the data and then merge this with the noiseDf
-    df = noiseDf.merge(restDf, how = "inner") #This will result in 
+    # Concatenate unchanged df with the noiseDf to get the dataframe to be returned
+    df = pd.concat([restDf, noiseDf],  axis = 0) #This will result in 
     
     return df  
 
-newData = insertingNoise(wpData.TRAIN, 1)
-#c = wpData.TRAIN 
+def insertingNoiseTestSet(xTest, yTest, noisePerc):
+    """ Function to handle inserting noise into test set. Returns noiseXTest and noiseYTest dataframes  """
+    noiseDf = insertingNoise( pd.concat([xTest, yTest],  axis = 1), noisePerc)
+    noiseXTest = noiseDf.iloc[:,:-1]
+    noiseYTest = noiseDf.iloc[:, -1]
+    return noiseXTest, noiseYTest
+
+noiseTrain = insertingNoise(wpData.TRAIN, 1)
+noiseXTest, noiseYTest = insertingNoiseTestSet(wpData.XTEST, wpData.YTEST, 1)
 
 
-#### Test
-    
-data_df1 = np.array([['Name','Unit','Attribute','Date'],['a','A',1,2014],['b','B',2,2015],['c','C',3,2016],\
-                 ['d','D',4,2017],['e','E',5,2018]])
-data_df2 = np.array([['Name','Unit','Attribute','Date'],['a','A',1,2014], ['e','E',5, 2018]])
-df1 = pd.DataFrame(data=data_df1)
-df2 = pd.DataFrame(data=data_df2)
-df3 = df2.merge(df1, how = "right", indicator = True)    
-a = df3.loc[df3['_merge'] == 'right_only', ].iloc[:,:-1]
 
-    
+## Now write functions to add noise over a specified range, and then plot the resulting change in accuracy 
     
     
     
