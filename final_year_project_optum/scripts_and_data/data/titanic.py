@@ -128,6 +128,7 @@ class Titanic():
     tempTest = pd.concat([test, yTest], axis=1)    
     fullDataset = pd.concat([train, tempTest], ignore_index=True)
     
+    """
     
     ######################## Some interesting plots ###########################
     ######## Correaltion heatmap
@@ -145,7 +146,7 @@ class Titanic():
                      hue='Survived', palette = 'seismic',size=1.2,diag_kind = 'kde',diag_kws=dict(shade=True),plot_kws=dict(s=10) )
     g.set(xticklabels=[])
         
-    
+    """
     ###################### Set vars that will be accessed later as constants #######################
     TARGET_VAR_NAME = "Survived"
     TRAIN = train

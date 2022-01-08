@@ -11,6 +11,9 @@ from sklearn.linear_model import LinearRegression
 from yellowbrick.regressor import CooksDistance
 import matplotlib.pyplot as plt
 from yellowbrick.regressor import cooks_distance
+import statistics
+import matplotlib.pyplot as plt
+
 
 # Change directory to correctDir or script wont run correctly
 CORRECTDIR = "C:\\Users\\micha\\Documents\\3rd year\\Software Applications\\PythonSpyder(Anaconda V)\\final_year_project_optum"
@@ -148,7 +151,8 @@ def rfNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
         print("Error: please enter an integer noiseIncrements value")
         return 0
    
-    accuracy = []
+    testAccuracy = []
+    valAccuracy = []
     noiseLevelPerc = []
     train = dataRef.TRAIN 
     xTest = dataRef.XTEST
@@ -157,21 +161,38 @@ def rfNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
     
     noiseIncrements = round((noiseEndPerc - noiseStartPerc)/numNoiseIncrements)
     for x in range(noiseStartPerc, noiseEndPerc, noiseIncrements):
-        train = insertingNoise(dataRef.TRAIN, x)
-        xTest, yTest = insertingNoiseTestSet(dataRef.XTEST, dataRef.YTEST, x)
         
-        rfObj = rf.RandomForest(dataRef.TARGET_VAR_NAME, train, xTest, yTest, dataRef.XVALID, dataRef.YVALID)
-        rfObj.createModel() # train the model
-        rfAccuracy = rfObj.modelAccuracy() # get model accuracy 
-        accuracy.append(rfAccuracy)
-        noiseLevelPerc.append(x)
+        # Get average accuracy at this perc noise interval
+        testAccuaracyAtIncrement = []
+        valAccuaracyAtIncrement = []
+        for i in range(10):
+            train = insertingNoise(dataRef.TRAIN, x)
+            xTest, yTest = insertingNoiseTestSet(dataRef.XTEST, dataRef.YTEST, x)
+            rfObj = rf.RandomForest(dataRef.TARGET_VAR_NAME, train, xTest, yTest, dataRef.XVALID, dataRef.YVALID)
+            rfObj.createModel() # train the model
+            # Get and append model test and validation accuracy
+            rfTestAccuracy = rfObj.modelAccuracy() 
+            testAccuaracyAtIncrement.append(rfTestAccuracy)
+            rfValAccuaracy = rfObj.validAccuracy()
+            valAccuaracyAtIncrement.append(rfValAccuaracy)
+            
+        testAccuracy.append(statistics.mean(testAccuaracyAtIncrement))
+        valAccuracy.append(statistics.mean(valAccuaracyAtIncrement))
+        noiseLevelPerc.append(x) # Append noise level perc
     
-    return accuracy, noiseLevelPerc
+    return testAccuracy, valAccuracy, noiseLevelPerc
         
         
-a, b = rfNoiseEffect(wpData, 0, 15, 15)
-    
-    
+testAccuracy, valAccuracy, noiseLevelPerc = rfNoiseEffect(wpData, 0, 100, 100)
+# Note the below plots must be run all at once
+plt.plot(noiseLevelPerc, testAccuracy,'r--', label = "Test")
+plt.plot(noiseLevelPerc, valAccuracy, 'g--', label = "Validation")
+plt.legend()
+plt.xlabel("Noise %")
+plt.ylabel("Average Accuracy %")
+plt.suptitle("Noise Effect on Random Forest Test and Validation Accuracy", fontsize=18)
+plt.title("(Noise applied to training and test sets)", fontsize=12)
+
  
     
      
