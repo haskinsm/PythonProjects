@@ -58,9 +58,8 @@ class RandomForest():
             
             
     def createModel(self):
-        """ Function for creating random forest models"""
-    
-        """
+        """ 
+        Function for creating random forest models
         Parameters that will be used:
         - n_jobs : Number of cores used for the training process. If set to -1, all cores are used.
         - n_estimators : Number of classification trees in your learning model ( set to 10 per default)
@@ -69,7 +68,7 @@ class RandomForest():
         - verbose : Controls whether you want to output any text during the learning process. A value 
          of 0 suppresses all text while a value of 3 outputs the tree learning process at every iteration.
         """
-        SEED = 123 ## For reproducibility 
+        #SEED = 123 ## For reproducibility 
         # Some useful parameters which will come in handy later on
         # ntrain = self.train.shape[0]
         # ntest = self.test.shape[0]
@@ -86,7 +85,7 @@ class RandomForest():
             'max_features' : 'sqrt',
             'verbose': 0
         }
-        self.rfHelper = sklHelper.SklearnHelper(clf=RandomForestClassifier, seed=SEED, params=rf_params)
+        self.rfHelper = sklHelper.SklearnHelper(clf=RandomForestClassifier, params=rf_params)
         
         ### Create Numpy arrays of train, test and target dataframes to feed into model 
         # create yTrain variable and remove target variable from train 

@@ -39,19 +39,29 @@ rfFeatureImpPlot.show(renderer="png") # render plot of feature importance
 """
 
 ######### WaterPump (wp) Dataset ##########
+wpData = scripts_and_data.data.water_pump_dataset.WaterPump # reference of class WaterPump 
+
 ##### Random Forest
 # create shorter reference
 rf = scripts_and_data.scripts.random_forest # reference of script random_forest
-wpData = scripts_and_data.data.water_pump_dataset.WaterPump # reference of class WaterPump 
 # create instance of random forest class 
 wpRfObj = rf.RandomForest(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
 wpRfObj.createModel() # train the model
-wpRfAccuracy = wpRfObj.modelAccuracy() # get model accuracy 
+wpRfTestAccuracy = wpRfObj.modelAccuracy() # get model test accuracy 
+wpRfValidAccuracy = wpRfObj.validAccuracy() # get model valid accuracy 
 wpRfFeatureImpPlot = wpRfObj.featureImportance() # get plot of feature importance 
 wpRfFeatureImpPlot.show(renderer="png") # render plot of feature importance 
 
+##### XGBoost
+# create shorter reference
+xgb = scripts_and_data.scripts.xgboost_script # reference of script random_forest
+# create instance of random forest class 
+wpXgbObj = xgb.Xgboost(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
+wpXgbObj.createModel() # train the model
+wpXgbTestAccuracy = wpXgbObj.modelAccuracy() # get model test accuracy 
+wpXgbValidAccuracy =  wpXgbObj.validAccuracy() # get valid accuracy 
 
-    
+
 def getCooksDistance(data):
     """
     Function to get cooks distance for this dataset 
