@@ -45,7 +45,7 @@ wpData = scripts_and_data.data.water_pump_dataset.WaterPump # reference of class
 # create shorter reference
 rf = scripts_and_data.scripts.random_forest # reference of script random_forest
 # create instance of random forest class 
-wpRfObj = rf.RandomForest(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
+wpRfObj = rf.Model(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
 wpRfObj.createModel() # train the model
 wpRfTestAccuracy = wpRfObj.modelAccuracy() # get model test accuracy 
 wpRfValidAccuracy = wpRfObj.validAccuracy() # get model valid accuracy 
@@ -56,7 +56,7 @@ wpRfFeatureImpPlot.show(renderer="png") # render plot of feature importance
 # create shorter reference
 xgb = scripts_and_data.scripts.xgboost_script # reference of script random_forest
 # create instance of random forest class 
-wpXgbObj = xgb.Xgboost(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
+wpXgbObj = xgb.Model(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
 wpXgbObj.createModel() # train the model
 wpXgbTestAccuracy = wpXgbObj.modelAccuracy() # get model test accuracy 
 wpXgbValidAccuracy =  wpXgbObj.validAccuracy() # get valid accuracy 
@@ -145,7 +145,7 @@ noiseXTest, noiseYTest = insertingNoiseTestSet(wpData.XTEST, wpData.YTEST, 1)
 
 ## Now write functions to add noise over a specified range, and then plot the resulting change in accuracy 
 
-def rfNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
+def noiseEffect(mlAlgoScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
     """
     This function should take in the dataRef (being a refernece to a data class, e.g. wpData is an abbrevated version of the ref to the WaterPump data class
     where wpData = scripts_and_data.data.water_pump_dataset.WaterPump), should take in the noiseStart and noiseEnd values, and the integer noise increments.
@@ -167,7 +167,7 @@ def rfNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
     train = dataRef.TRAIN 
     xTest = dataRef.XTEST
     yTest = dataRef.YTEST
-    rf = scripts_and_data.scripts.random_forest # reference to random_forest script
+    #rf = scripts_and_data.scripts.random_forest # reference to random_forest script
     
     noiseIncrements = round((noiseEndPerc - noiseStartPerc)/numNoiseIncrements)
     for x in range(noiseStartPerc, noiseEndPerc, noiseIncrements):
@@ -178,12 +178,12 @@ def rfNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
         for i in range(10):
             train = insertingNoise(dataRef.TRAIN, x)
             xTest, yTest = insertingNoiseTestSet(dataRef.XTEST, dataRef.YTEST, x)
-            rfObj = rf.RandomForest(dataRef.TARGET_VAR_NAME, train, xTest, yTest, dataRef.XVALID, dataRef.YVALID)
-            rfObj.createModel() # train the model
+            obj = mlAlgoScriptRef.Model(dataRef.TARGET_VAR_NAME, train, xTest, yTest, dataRef.XVALID, dataRef.YVALID)
+            obj.createModel() # train the model
             # Get and append model test and validation accuracy
-            rfTestAccuracy = rfObj.modelAccuracy() 
+            rfTestAccuracy = obj.modelAccuracy() 
             testAccuaracyAtIncrement.append(rfTestAccuracy)
-            rfValAccuaracy = rfObj.validAccuracy()
+            rfValAccuaracy = obj.validAccuracy()
             valAccuaracyAtIncrement.append(rfValAccuaracy)
             
         testAccuracy.append(statistics.mean(testAccuaracyAtIncrement))
@@ -192,8 +192,15 @@ def rfNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
     
     return testAccuracy, valAccuracy, noiseLevelPerc
         
+def rfNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
+    rfScriptRef = scripts_and_data.scripts.random_forest
+    return noiseEffect(rfScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements)
+
+def xgbNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
+    xgbScriptRef = scripts_and_data.scripts.xgboost_script
+    return noiseEffect(xgbScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements)
         
-testAccuracy, valAccuracy, noiseLevelPerc = rfNoiseEffect(wpData, 0, 100, 100)
+testAccuracy, valAccuracy, noiseLevelPerc = rfNoiseEffect(wpData, 0, 10, 10)
 # Note the below plots must be run all at once
 plt.plot(noiseLevelPerc, testAccuracy,'r--', label = "Test")
 plt.plot(noiseLevelPerc, valAccuracy, 'g--', label = "Validation")
@@ -203,10 +210,19 @@ plt.ylabel("Average Accuracy %")
 plt.suptitle("Noise Effect on Random Forest Test and Validation Accuracy", fontsize=18)
 plt.title("(Noise applied to training and test sets)", fontsize=12)
 
+testAccuracy, valAccuracy, noiseLevelPerc = xgbNoiseEffect(wpData, 0, 10, 10)
+# Note the below plots must be run all at once
+plt.plot(noiseLevelPerc, testAccuracy,'r--', label = "Test")
+plt.plot(noiseLevelPerc, valAccuracy, 'g--', label = "Validation")
+plt.legend()
+plt.xlabel("Noise %")
+plt.ylabel("Average Accuracy %")
+plt.suptitle("Noise Effect on xgBoost Test and Validation Accuracy", fontsize=18)
+plt.title("(Noise applied to training and test sets)", fontsize=12)
+
  
-    
-     
-    
+
+
     
     
     

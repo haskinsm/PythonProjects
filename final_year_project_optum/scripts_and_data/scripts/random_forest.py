@@ -35,7 +35,7 @@ import sklearn_helper as sklHelper #### Make sure your in the general directory 
 # i.e. C:\Users\micha\Documents\3rd year\Software Applications\PythonSpyder(Anaconda V)\final_year_project_optum *************
 
 
-class RandomForest():
+class Model():
     """
     A class for creating random forest models. Create instance of this class by passing in targetVarColName and a 
     Train, xTest, yTest, xValid and yValid datasets

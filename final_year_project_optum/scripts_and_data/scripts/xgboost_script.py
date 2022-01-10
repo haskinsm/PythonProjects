@@ -11,7 +11,7 @@ import xgboost
 import sys
 from sklearn import metrics
 
-class Xgboost():
+class Model():
     """
     A class for creating xgboost models. Create instance of this class by passing in targetVarColName and a 
     Train, xTest, yTest, xValid and yValid datasets
