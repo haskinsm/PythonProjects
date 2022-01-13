@@ -210,7 +210,7 @@ plt.ylabel("Average Accuracy %")
 plt.suptitle("Noise Effect on Random Forest Test and Validation Accuracy", fontsize=18)
 plt.title("(Noise applied to training and test sets)", fontsize=12)
 
-testAccuracy, valAccuracy, noiseLevelPerc = xgbNoiseEffect(wpData, 0, 10, 10)
+testAccuracy, valAccuracy, noiseLevelPerc = xgbNoiseEffect(wpData, 0, 100, 100)
 # Note the below plots must be run all at once
 plt.plot(noiseLevelPerc, testAccuracy,'r--', label = "Test")
 plt.plot(noiseLevelPerc, valAccuracy, 'g--', label = "Validation")
