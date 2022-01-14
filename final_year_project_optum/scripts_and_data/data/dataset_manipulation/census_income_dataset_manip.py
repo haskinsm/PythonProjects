@@ -38,15 +38,15 @@ data.drop('fnlwgt', axis = 1, inplace = True)
 
 
 ############################ Missing data ################################
-data.describe()
-data.info()
+#data.describe()
+#data.info()
 data.isnull().sum() #Missing data appears to be represented as '?' in a few of the vars 
 levels # Can see the count of each different variables unique values
 
-#### Replace missing values in any nominal variables with 'unknown'
-data['native-country'].replace('?', 'unknown', inplace = True) 
-data['occupation'].replace('?', 'unknown', inplace = True) 
-data['workclass'].replace('?', 'unknown', inplace = True) 
+#### Replace missing values in any nominal variables with the mode of that variable 
+data['native-country'].replace('?', data['native-country'].mode()[0], inplace = True) 
+data['occupation'].replace('?', data['occupation'].mode()[0], inplace = True) 
+data['workclass'].replace('?', data['workclass'].mode()[0], inplace = True) 
 
 
 ### Not known if following variables contain missing data
@@ -83,7 +83,7 @@ encData = pd.concat([pd.concat([XCont, XNomDumDf], axis = 1), y], axis = 1)
 #################### Now save as a csv file ####################
 # This csv file will be read in in water_pump_dataset.py 
 csvFilePath = os.path.join(CORRECTDIR, "scripts_and_data\\data\\datasets\\income_data\\processed_data.csv")
-encData.to_csv(csvFilePath, header = True, index = True)
+encData.to_csv(csvFilePath, header = True, index = False)
 
 
 

@@ -61,6 +61,20 @@ wpXgbObj.createModel() # train the model
 wpXgbTestAccuracy = wpXgbObj.modelAccuracy() # get model test accuracy 
 wpXgbValidAccuracy =  wpXgbObj.validAccuracy() # get valid accuracy 
 
+########## Census Income dataset #######################
+cIData = scripts_and_data.data.census_income_dataset.CensusIncome
+
+##### Random Forest
+# create shorter reference
+rf = scripts_and_data.scripts.random_forest # reference of script random_forest
+# create instance of random forest class 
+cIRfObj = rf.Model(cIData.TARGET_VAR_NAME, cIData.TRAIN, cIData.XTEST, cIData.YTEST, cIData.XVALID, cIData.YVALID)
+cIRfObj.createModel() # train the model
+cIRfTestAccuracy = cIRfObj.modelAccuracy() # get model test accuracy 
+cIRfValidAccuracy = cIRfObj.validAccuracy() # get model valid accuracy
+cIRfFeatureImpPlot = cIRfObj.featureImportance() # get plot of feature importance 
+cIRfFeatureImpPlot.show(renderer="png") # render plot of feature importance
+
 
 def getCooksDistance(data):
     """

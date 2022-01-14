@@ -79,7 +79,7 @@ data.drop('district_code', axis = 1, inplace = True)
 #data['funder'] = data['funder'].fillna('unknown') #unknown
 #data['installer'] = data['installer'].fillna('unknown') #unknown
 data['scheme_management'] = data['scheme_management'].fillna('unknown') #unknown
-data['permit'] = data['permit'].fillna(data['permit'].median()) #median
+data['permit'] = data['permit'].fillna(data['permit'].mode()) #mode
 
 ### Other instances of missing data
 ## The variable population has a number of observations with the value of zero. It is unclear whether this 
@@ -87,9 +87,9 @@ data['permit'] = data['permit'].fillna(data['permit'].median()) #median
 ## The variable construction_year contains missing data with the value of zero. The first 'real' recording of construction year is 
    # 1960. So I will reset construction year so that 1960 has value of 1, 1961 has value of 2, etc and the missing data
    # has the median value of 27 
-data['construction_year'].replace(0, data['construction_year'].median(), inplace = True) 
+data['construction_year'].replace(0, round(data['construction_year'].mean()), inplace = True) 
 data['construction_year'] = data['construction_year'] - 1959
-# now construction year has missing data with median value of 27 and all the other datapoints values range from 1-> 54
+# now construction year has missing data with mean value of 27 and all the other datapoints values range from 1-> 54
 
 # Many of the variables contain the value 'unknown', but this is acceptable 
 
