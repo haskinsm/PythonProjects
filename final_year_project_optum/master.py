@@ -213,27 +213,38 @@ def rfNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
 def xgbNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
     xgbScriptRef = scripts_and_data.scripts.xgboost_script
     return noiseEffect(xgbScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements)
-        
-testAccuracy, valAccuracy, noiseLevelPerc = rfNoiseEffect(wpData, 0, 10, 10)
-# Note the below plots must be run all at once
-plt.plot(noiseLevelPerc, testAccuracy,'r--', label = "Test")
-plt.plot(noiseLevelPerc, valAccuracy, 'g--', label = "Validation")
-plt.legend()
-plt.xlabel("Noise %")
-plt.ylabel("Average Accuracy %")
-plt.suptitle("Noise Effect on Random Forest Test and Validation Accuracy", fontsize=18)
-plt.title("(Noise applied to training and test sets)", fontsize=12)
 
-testAccuracy, valAccuracy, noiseLevelPerc = xgbNoiseEffect(wpData, 0, 100, 100)
-# Note the below plots must be run all at once
-plt.plot(noiseLevelPerc, testAccuracy,'r--', label = "Test")
-plt.plot(noiseLevelPerc, valAccuracy, 'g--', label = "Validation")
-plt.legend()
-plt.xlabel("Noise %")
-plt.ylabel("Average Accuracy %")
-plt.suptitle("Noise Effect on xgBoost Test and Validation Accuracy", fontsize=18)
-plt.title("(Noise applied to training and test sets)", fontsize=12)
+def createNoiseEffectPlot(testAccuracy, valAccuracy, noiseLevelPerc, datasetName, algorithmName):
+    # Note the below plots must be run all at once
+    plt.plot(noiseLevelPerc, testAccuracy,'r--', label = "Test")
+    plt.plot(noiseLevelPerc, valAccuracy, 'g--', label = "Validation")
+    plt.legend()
+    plt.xlabel("Noise %")
+    plt.ylabel("Average Accuracy %")
+    plt.suptitle("Noise Effect on {} Test and Validation Accuracy for {}".format(algorithmName, datasetName), fontsize=18)
+    plt.title("(Noise applied to training and test sets)", fontsize=12)
+  
+####### WaterPump dataset ################### 
+## rf     
+rfTestAccuracy, rfValAccuracy, rfNoiseLevelPerc = rfNoiseEffect(wpData, 0, 5, 5)
+# Generate plot of results
+createNoiseEffectPlot(rfTestAccuracy, rfValAccuracy, rfNoiseLevelPerc, "Water Pump dataset", "Random Forest")
 
+## xgb
+xgbTestAccuracy, xgbValAccuracy, xgbNoiseLevelPerc = xgbNoiseEffect(wpData, 0, 100, 100)
+# Generate plot of results
+createNoiseEffectPlot(xgbTestAccuracy, xgbValAccuracy, xgbNoiseLevelPerc, "Water Pump dataset", "XGBoost")
+
+####### Census Income dataset ###############
+## rf     
+rfTestAccuracy, rfValAccuracy, rfNoiseLevelPerc = rfNoiseEffect(cIData, 0, 5, 5)
+# Generate plot of results
+createNoiseEffectPlot(rfTestAccuracy, rfValAccuracy, rfNoiseLevelPerc, "Census Income dataset", "Random Forest")
+
+## xgb
+xgbTestAccuracy, xgbValAccuracy, xgbNoiseLevelPerc = xgbNoiseEffect(cIData, 0, 100, 100)
+# Generate plot of results
+createNoiseEffectPlot(xgbTestAccuracy, xgbValAccuracy, xgbNoiseLevelPerc, "Census Income dataset", "XGBoost")
  
 
 
