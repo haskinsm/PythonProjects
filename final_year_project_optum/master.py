@@ -214,20 +214,43 @@ def xgbNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
     xgbScriptRef = scripts_and_data.scripts.xgboost_script
     return noiseEffect(xgbScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements)
 
-def createNoiseEffectPlot(testAccuracy, valAccuracy, noiseLevelPerc, datasetName, algorithmName):
-    # Note the below plots must be run all at once
-    #nextFigNumber = plt.gcf().number + 1 #Get next figure number by adding one to the current figure number
-    #fig = plt.figure()
+def createSingleNoiseEffectPlot(testAccuracy, valAccuracy, noiseLevelPerc, datasetName, algorithmName):
+    plt.figure() # Instantiate a new figure 
     plt.plot(noiseLevelPerc, testAccuracy,'r--', label = "Test")
     plt.plot(noiseLevelPerc, valAccuracy, 'g--', label = "Validation")
     plt.legend()
     plt.xlabel("Noise %")
     plt.ylabel("Average Accuracy %")
     plt.suptitle("Noise Effect on {} Accuracy for {}".format(algorithmName, datasetName), fontsize=18)
-    plt.title("Note: Target variable noise randomly inserted in training and test sets", fontsize=12)
+    plt.title("Note: Noise randomly inserted to target variable in training and test sets", fontsize=12)
+    #plt.close() # Close current fig so nothing further will be overlayed on it 
     
-def createRfNoiseEffectPlot(wpTestAccuracy, wpValAccuracy, ciTestAccuracy, ciValAccuracy, noiseLevelPerc):
-    # Note the below plots must be run all at once
+def createMlAlgorithmNoiseEffectPlot(wpTestAccuracy, wpValAccuracy, ciTestAccuracy, ciValAccuracy, noiseLevelPerc, mlAlgorithmName):
+    """
+    Function to generate a plot depicting how the accuracy of machine learning alrgorithm Random forests is
+    affected by adding noise to the target variable in the test and training sets for multiple datasets.  
+
+    Parameters
+    ----------
+    wpTestAccuracy : []
+        DESCRIPTION.
+    wpValAccuracy : []
+        DESCRIPTION.
+    ciTestAccuracy : []
+        DESCRIPTION.
+    ciValAccuracy : []
+        DESCRIPTION.
+    noiseLevelPerc : []
+        DESCRIPTION. Assumes that the noise increments is the same for all datasets 
+    mlAlgorithmName : String
+        DESCRIPTION. E.g. "Random Forest" or "XGBoost"
+
+    Returns
+    -------
+    None.
+
+    """
+    plt.figure()
     plt.plot(noiseLevelPerc, wpTestAccuracy,'r--', label = "Test WaterPump Dataset")
     plt.plot(noiseLevelPerc, wpValAccuracy, 'g--', label = "Validation WaterPump Dataset")
     plt.plot(noiseLevelPerc, ciTestAccuracy,'r:', label = "Test Census Income Dataset")
@@ -235,35 +258,69 @@ def createRfNoiseEffectPlot(wpTestAccuracy, wpValAccuracy, ciTestAccuracy, ciVal
     plt.legend()
     plt.xlabel("Noise %")
     plt.ylabel("Average Accuracy %")
-    plt.suptitle("Noise Effect on Random Forest Accuracy", fontsize=18)
-    plt.title("Note: Target variable noise randomly inserted in training and test sets", fontsize=12)
+    plt.suptitle("Noise Effect on {} Accuracy".format(mlAlgorithmName), fontsize=18)
+    plt.title("Note: Noise randomly inserted to target variable in training and test sets", fontsize=12)
+    
+def createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAccuracy, wpXgbValAccuracy, ciRfTestAccuracy, ciRfValAccuracy, ciXgbTestAccuracy, ciXgbValAccuracy, noiseLevelPerc):
+    plt.figure() # Instantiate a new figure 
+    # rf
+    plt.plot(noiseLevelPerc, wpRfTestAccuracy,'r--', label = "Rf Test WaterPump D.")
+    plt.plot(noiseLevelPerc, wpRfValAccuracy, 'g--', label = "Rf Validation WaterPump D.")
+    plt.plot(noiseLevelPerc, ciRfTestAccuracy,'r:', label = "Rf Test Census Income D.")
+    plt.plot(noiseLevelPerc, ciRfValAccuracy, 'g:', label = "Rf Validation Census Income D.")
+    # xgb
+    plt.plot(noiseLevelPerc, wpXgbTestAccuracy,'b--', label = "Xgb Test WaterPump D.")
+    plt.plot(noiseLevelPerc, wpXgbValAccuracy, 'k--', label = "Xgb Validation WaterPump D.")
+    plt.plot(noiseLevelPerc, ciXgbTestAccuracy,'b:', label = "Xgb Test Census Income D.")
+    plt.plot(noiseLevelPerc, ciXgbValAccuracy, 'k:', label = "Xgb Validation Census Income D.")
+    
+    plt.legend()
+    plt.xlabel("Noise %")
+    plt.ylabel("Average Accuracy %")
+    plt.suptitle("Noise Effect on Machine Learning Algorithms Accuracy", fontsize=18)
+    plt.title("Note: Noise randomly inserted to target variable in training and test sets", fontsize=12)
   
-####### WaterPump dataset ################### 
+    
+########### Get accuracy of specifc datasets and algorithms for specific noise levels ########
+####### WaterPump dataset 
 ## rf     
 wpRfTestAccuracy, wpRfValAccuracy, wpRfNoiseLevelPerc = rfNoiseEffect(wpData, 0, 100, 100)
-# Generate plot of results
-createNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpRfNoiseLevelPerc, "Water Pump dataset", "Random Forest")
-
 ## xgb
 wpXgbTestAccuracy, wpXgbValAccuracy, wpXgbNoiseLevelPerc = xgbNoiseEffect(wpData, 0, 100, 100)
-# Generate plot of results
-createNoiseEffectPlot(wpXgbTestAccuracy, wpXgbValAccuracy, wpXgbNoiseLevelPerc, "Water Pump dataset", "XGBoost")
 
-####### Census Income dataset ###############
+####### Census Income dataset 
 ## rf     
 ciRfTestAccuracy, ciRfValAccuracy, ciRfNoiseLevelPerc = rfNoiseEffect(cIData, 0, 100, 100)
-# Generate plot of results
-createNoiseEffectPlot(ciRfTestAccuracy, ciRfValAccuracy, ciRfNoiseLevelPerc, "Census Income dataset", "Random Forest")
-
 ## xgb
 ciXgbTestAccuracy, ciXgbValAccuracy, ciXgbNoiseLevelPerc = xgbNoiseEffect(cIData, 0, 100, 100)
-# Generate plot of results
-createNoiseEffectPlot(ciXgbTestAccuracy, ciXgbValAccuracy, ciXgbNoiseLevelPerc, "Census Income dataset", "XGBoost")
+
+
+
+############################ Plots ##############################
+####### Generate Simple plots for each algorithm applied to each dataset #####
+#### Waterpump dataset 
+## rf
+createSingleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpRfNoiseLevelPerc, "Water Pump dataset", "Random Forest")
+## xgb
+createSingleNoiseEffectPlot(wpXgbTestAccuracy, wpXgbValAccuracy, wpXgbNoiseLevelPerc, "Water Pump dataset", "XGBoost")
+
+#### Census Income 
+## rf
+createSingleNoiseEffectPlot(ciRfTestAccuracy, ciRfValAccuracy, ciRfNoiseLevelPerc, "Census Income dataset", "Random Forest")
+## xgb
+createSingleNoiseEffectPlot(wpXgbTestAccuracy, wpXgbValAccuracy, wpXgbNoiseLevelPerc, "Water Pump dataset", "XGBoost")
 
     
-    
-    
-    
-    
+#######  Noise Effect for specific ml algorithm on multiple datasets ######
+#### rf
+createMlAlgorithmNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, ciRfTestAccuracy, ciRfValAccuracy, wpRfNoiseLevelPerc, "Random Forest")
+#### xgb 
+createMlAlgorithmNoiseEffectPlot(wpXgbTestAccuracy, wpXgbValAccuracy, ciXgbTestAccuracy, ciXgbValAccuracy, wpXgbNoiseLevelPerc, "XGBoost")
+
+
+###### Noise Effect for multiple datasets #######
+createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAccuracy, wpXgbValAccuracy, ciRfTestAccuracy, ciRfValAccuracy, ciXgbTestAccuracy, ciXgbValAccuracy, wpRfNoiseLevelPerc)
+
+
     
 
