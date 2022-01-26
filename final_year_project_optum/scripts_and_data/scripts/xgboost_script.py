@@ -16,7 +16,7 @@ class Model():
     A class for creating xgboost models. Create instance of this class by passing in targetVarColName and a 
     Train, xTest, yTest, xValid and yValid datasets
     i.e. creat an instance of this class in the master script with the following code
-    xgb = Xgboost(targetVar, train, xTest, yTest, xValid, yValid)
+    xgb = Model(targetVar, train, xTest, yTest, xValid, yValid)
     """
     def __init__(self, *args):
         if len(args) == 6:
@@ -28,7 +28,7 @@ class Model():
             self.yValid = args[5]
         else:
             print("You must pass in the target variable columns name, and a training, XTest, yTest, XValid and yValid pandas dataframes" + 
-                  " in the master script. E.g:  xgb = Xgboost(targetVar, train, xTest, yTest, xValid, yValid) ")
+                  " in the master script. E.g:  xgb = Model(targetVar, train, xTest, yTest, xValid, yValid) ")
             print("\nProgram Execution aborted. Goodbye.")
             sys.exit() ## This will terminate the script execution
     

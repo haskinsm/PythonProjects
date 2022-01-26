@@ -5,14 +5,13 @@ Created on Mon Nov  1 15:02:43 2021
 @author: micha
 """
 import os
-import numpy as np 
+#import numpy as np 
 import pandas as pd 
-from sklearn.linear_model import LinearRegression
-from yellowbrick.regressor import CooksDistance
+#from sklearn.linear_model import LinearRegression
+#from yellowbrick.regressor import CooksDistance
 import matplotlib.pyplot as plt
 from yellowbrick.regressor import cooks_distance
 import statistics
-import matplotlib.pyplot as plt
 
 
 # Change directory to correctDir or script wont run correctly
@@ -23,9 +22,10 @@ import scripts_and_data
 
 
 
-
+################################# Basic system testing immediatly below #####################################
 ####### Titanic dataset ############
-""" ********************************************* This ownt work as I've made changes to random_forest constructor
+""" 
+********************************************* This wownt work anymore as I've made changes to random_forest constructor
 ##### Random Forest
 # create shorter refernce
 rf = scripts_and_data.scripts.random_forest
@@ -54,12 +54,23 @@ wpRfFeatureImpPlot.show(renderer="png") # render plot of feature importance
 
 ##### XGBoost
 # create shorter reference
-xgb = scripts_and_data.scripts.xgboost_script # reference of script random_forest
-# create instance of random forest class 
+xgb = scripts_and_data.scripts.xgboost_script 
+# create instance of xgboost class 
 wpXgbObj = xgb.Model(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
 wpXgbObj.createModel() # train the model
 wpXgbTestAccuracy = wpXgbObj.modelAccuracy() # get model test accuracy 
 wpXgbValidAccuracy =  wpXgbObj.validAccuracy() # get valid accuracy 
+
+
+##### Decision Tree
+# create shorter reference 
+dt = scripts_and_data.scripts.decision_tree
+# create instance of decsion tree class
+wpDtObj = dt.Model(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
+wpDtObj.createModel() # train the model
+wpDtTestAccuracy = wpDtObj.modelAccuracy() # get model test accuracy 
+wpDtValidAccuracy =  wpDtObj.validAccuracy() # get valid accuracy 
+
 
 ########## Census Income dataset #######################
 cIData = scripts_and_data.data.census_income_dataset.CensusIncome
@@ -73,8 +84,23 @@ cIRfObj.createModel() # train the model
 cIRfTestAccuracy = cIRfObj.modelAccuracy() # get model test accuracy 
 cIRfValidAccuracy = cIRfObj.validAccuracy() # get model valid accuracy
 cIRfFeatureImpPlot = cIRfObj.featureImportance() # get plot of feature importance 
-cIRfFeatureImpPlot.show(renderer="png") # render plot of feature importance
+#cIRfFeatureImpPlot.show(renderer="png") # render plot of feature importance
 
+########## Credit Card Default dataset ###################
+cCDData = scripts_and_data.data.credit_card_default_dataset.CreditCardDefault
+
+##### Random Forest 
+# create shorter reference
+rf = scripts_and_data.scripts.random_forest # reference of script random_forest
+# create instance of random forest class 
+cCDRfObj = rf.Model(cCDData.TARGET_VAR_NAME, cCDData.TRAIN, cCDData.XTEST, cCDData.YTEST, cCDData.XVALID, cCDData.YVALID)
+cCDRfObj.createModel() # train the model
+cCDRfTestAccuracy = cCDRfObj.modelAccuracy() # get model test accuracy 
+cCDRfValidAccuracy = cCDRfObj.validAccuracy() # get model valid accuracy
+cCDRfFeatureImpPlot = cCDRfObj.featureImportance() # get plot of feature importance 
+#cCDRfFeatureImpPlot.show(renderer="png") # render plot of feature importance
+
+################################# End of basic system testing ##############################
 
 def getCooksDistance(data):
     """
@@ -133,8 +159,8 @@ def insertingNoise(data, noisePerc):
         targetValue = row[-1]
         if(targetValue == 0):
             return 1
-        else: 
-            return 0
+        # else
+        return 0 
     
     # Now interate through the toChangeDf and add noise to target variable 
     toChangeDf.iloc[:,-1] = toChangeDf.apply(lambda row: changeTargetValue(row), axis = 1)
@@ -214,6 +240,10 @@ def xgbNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
     xgbScriptRef = scripts_and_data.scripts.xgboost_script
     return noiseEffect(xgbScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements)
 
+def dtNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
+    dtScriptRef = scripts_and_data.scripts.decision_tree
+    return noiseEffect(dtScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements)
+
 def createSingleNoiseEffectPlot(testAccuracy, valAccuracy, noiseLevelPerc, datasetName, algorithmName):
     plt.figure() # Instantiate a new figure 
     plt.plot(noiseLevelPerc, testAccuracy,'r--', label = "Test")
@@ -287,12 +317,24 @@ def createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAc
 wpRfTestAccuracy, wpRfValAccuracy, wpRfNoiseLevelPerc = rfNoiseEffect(wpData, 0, 100, 100)
 ## xgb
 wpXgbTestAccuracy, wpXgbValAccuracy, wpXgbNoiseLevelPerc = xgbNoiseEffect(wpData, 0, 100, 100)
+## dt 
+wpDtTestAccuracy, wpDtValAccuracy, wpDtNoiseLevelPerc = dtNoiseEffect(wpData, 0, 100, 100)
 
 ####### Census Income dataset 
 ## rf     
 ciRfTestAccuracy, ciRfValAccuracy, ciRfNoiseLevelPerc = rfNoiseEffect(cIData, 0, 100, 100)
 ## xgb
 ciXgbTestAccuracy, ciXgbValAccuracy, ciXgbNoiseLevelPerc = xgbNoiseEffect(cIData, 0, 100, 100)
+## dt 
+ciDtTestAccuracy, ciDtValAccuracy, ciDtNoiseLevelPerc = dtNoiseEffect(cIData, 0, 100, 100)
+
+###### Credit Card Default dataset 
+## rf
+cCDRfTestAccuracy, cCDRfValAccuracy, cCDRfNoiseLevelPerc = rfNoiseEffect(cCDData, 0, 100, 100)
+## xgb
+cCDXgbTestAccuracy, cCDXgbValAccuracy, cCDXgbNoiseLevelPerc = xgbNoiseEffect(cCDData, 0, 100, 100)
+## dt 
+cCDDtTestAccuracy, cCDDtValAccuracy, cCDDtNoiseLevelPerc = dtNoiseEffect(cCDData, 0, 100, 100)
 
 
 

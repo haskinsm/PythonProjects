@@ -8,5 +8,6 @@ Created on Mon Nov  1 17:36:23 2021
 from . import titanic
 from . import water_pump_dataset
 from . import census_income_dataset
+from . import credit_card_default_dataset
 #from . import datasets      # Dont need this 
 

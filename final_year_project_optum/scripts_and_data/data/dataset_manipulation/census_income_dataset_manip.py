@@ -22,7 +22,7 @@ data = pd.read_csv(datasFilePath, header = 0, names = columnNames)
 
 ############################ Drop Variables ##############################
 #### Get number of levels of variable
-# Cant have variables with large number of unique values as my laptop is not able to handle OneHotEncoding these vars
+# Cant have nominal variables with large number of unique values as my laptop is not able to handle OneHotEncoding these vars
 levels = {}
 for i in data.columns:
     levels[i] = data[i].value_counts()
