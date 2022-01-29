@@ -23,20 +23,6 @@ import scripts_and_data
 
 
 ################################# Basic system testing immediatly below #####################################
-####### Titanic dataset ############
-""" 
-********************************************* This wownt work anymore as I've made changes to random_forest constructor
-##### Random Forest
-# create shorter refernce
-rf = scripts_and_data.scripts.random_forest
-data = scripts_and_data.data.titanic.Titanic
-# create instance of random forest class 
-rfObj = rf.RandomForest(data.TARGET_VAR_NAME, data.TRAIN, data.TEST, data.YTEST)
-rfObj.createModel() # train the model
-rfAccuracy = rfObj.modelAccuracy() # get model accuracy 
-rfFeatureImpPlot = rfObj.featureImportance() # get plot of feature importance 
-rfFeatureImpPlot.show(renderer="png") # render plot of feature importance 
-"""
 
 ######### WaterPump (wp) Dataset ##########
 wpData = scripts_and_data.data.water_pump_dataset.WaterPump # reference of class WaterPump 
@@ -47,8 +33,8 @@ rf = scripts_and_data.scripts.random_forest # reference of script random_forest
 # create instance of random forest class 
 wpRfObj = rf.Model(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
 wpRfObj.createModel() # train the model
-wpRfTestAccuracy = wpRfObj.modelAccuracy() # get model test accuracy 
-wpRfValidAccuracy = wpRfObj.validAccuracy() # get model valid accuracy 
+wpRfTest = wpRfObj.modelAccuracy() # get model test accuracy 
+wpRfVal = wpRfObj.validAccuracy() # get model valid accuracy 
 wpRfFeatureImpPlot = wpRfObj.featureImportance() # get plot of feature importance 
 wpRfFeatureImpPlot.show(renderer="png") # render plot of feature importance 
 
@@ -58,8 +44,8 @@ xgb = scripts_and_data.scripts.xgboost_script
 # create instance of xgboost class 
 wpXgbObj = xgb.Model(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
 wpXgbObj.createModel() # train the model
-wpXgbTestAccuracy = wpXgbObj.modelAccuracy() # get model test accuracy 
-wpXgbValidAccuracy =  wpXgbObj.validAccuracy() # get valid accuracy 
+wpXgbTest = wpXgbObj.modelAccuracy() # get model test accuracy 
+wpXgbVal =  wpXgbObj.validAccuracy() # get valid accuracy 
 
 
 ##### Decision Tree
@@ -68,8 +54,8 @@ dt = scripts_and_data.scripts.decision_tree
 # create instance of decsion tree class
 wpDtObj = dt.Model(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
 wpDtObj.createModel() # train the model
-wpDtTestAccuracy = wpDtObj.modelAccuracy() # get model test accuracy 
-wpDtValidAccuracy =  wpDtObj.validAccuracy() # get valid accuracy 
+wpDtTest = wpDtObj.modelAccuracy() # get model test accuracy 
+wpDtVal =  wpDtObj.validAccuracy() # get valid accuracy 
 
 
 ########## Census Income dataset #######################
@@ -81,8 +67,8 @@ rf = scripts_and_data.scripts.random_forest # reference of script random_forest
 # create instance of random forest class 
 cIRfObj = rf.Model(cIData.TARGET_VAR_NAME, cIData.TRAIN, cIData.XTEST, cIData.YTEST, cIData.XVALID, cIData.YVALID)
 cIRfObj.createModel() # train the model
-cIRfTestAccuracy = cIRfObj.modelAccuracy() # get model test accuracy 
-cIRfValidAccuracy = cIRfObj.validAccuracy() # get model valid accuracy
+cIRfTest = cIRfObj.modelAccuracy() # get model test accuracy 
+cIRfVal = cIRfObj.validAccuracy() # get model valid accuracy
 cIRfFeatureImpPlot = cIRfObj.featureImportance() # get plot of feature importance 
 #cIRfFeatureImpPlot.show(renderer="png") # render plot of feature importance
 
@@ -95,10 +81,19 @@ rf = scripts_and_data.scripts.random_forest # reference of script random_forest
 # create instance of random forest class 
 cCDRfObj = rf.Model(cCDData.TARGET_VAR_NAME, cCDData.TRAIN, cCDData.XTEST, cCDData.YTEST, cCDData.XVALID, cCDData.YVALID)
 cCDRfObj.createModel() # train the model
-cCDRfTestAccuracy = cCDRfObj.modelAccuracy() # get model test accuracy 
-cCDRfValidAccuracy = cCDRfObj.validAccuracy() # get model valid accuracy
+cCDRfTest = cCDRfObj.modelAccuracy() # get model test accuracy 
+cCDRfVal = cCDRfObj.validAccuracy() # get model valid accuracy
 cCDRfFeatureImpPlot = cCDRfObj.featureImportance() # get plot of feature importance 
 #cCDRfFeatureImpPlot.show(renderer="png") # render plot of feature importance
+
+##### Support vector machine
+# create shorter reference 
+svm = scripts_and_data.scripts.support_vector_machine
+# create instance of class 
+cCDSvmObj = svm.Model(cCDData.TARGET_VAR_NAME, cCDData.TRAIN, cCDData.XTEST, cCDData.YTEST, cCDData.XVALID, cCDData.YVALID)
+cCDSvmObj.createModel()
+cCDSvmTest = cCDSvmObj.modelAccuracy()
+cCDSvmVal = cCDSvmObj.validAccuracy()
 
 ################################# End of basic system testing ##############################
 
@@ -415,6 +410,35 @@ def dtNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
     dtScriptRef = scripts_and_data.scripts.decision_tree
     return noiseEffect(dtScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements)
 
+def svmNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
+    """
+    Helper Function for general noise Effect function. This will call the noiseEffect function 
+    will add noise to data used to train support vector machine models
+
+    Parameters
+    ----------
+    dataRef : Class Reference
+        DESCRIPTION. Refernece to the class of a dataset E.g.: scripts_and_data.data.water_pump_dataset.WaterPump # reference of class WaterPump
+    noiseStartPerc : Float 
+        DESCRIPTION. % to start incrementing noise from 
+    noiseEndPerc : Float 
+        DESCRIPTION. % to stop incrementing noise at 
+    numNoiseIncrements : Int
+        DESCRIPTION. Number of noise increments over the range of noiseStartPerc and noieEndPerc
+
+    Returns
+    -------
+    [] 
+        DESCRIPTION. List of test Accuaracys of decision tree model when noise is applied   
+    [] 
+        DESCRIPTION. List of validation Accuaracys of decision tree model when noise is applied 
+    [] 
+        DESCRIPTION. List of % noise increments that have been applied 
+
+    """
+    dtScriptRef = scripts_and_data.scripts.support_vector_machine
+    return noiseEffect(dtScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements)
+
 def createSingleNoiseEffectPlot(testAccuracy, valAccuracy, noiseLevelPerc, datasetName, algorithmName):
     """
     This is a simple plotting fucntion which plots the test and validation accuracy of a specific ML algorithm
@@ -589,6 +613,8 @@ wpRfTestAccuracy, wpRfValAccuracy, wpRfNoiseLevelPerc = rfNoiseEffect(wpData, 0,
 wpXgbTestAccuracy, wpXgbValAccuracy, wpXgbNoiseLevelPerc = xgbNoiseEffect(wpData, 0, 50, 51)
 ## dt 
 wpDtTestAccuracy, wpDtValAccuracy, wpDtNoiseLevelPerc = dtNoiseEffect(wpData, 0, 50, 51)
+## svm 
+wpSvmTestAccuracy, wpSvmValAccuracy, wpSvmNoiseLevelPerc = svmNoiseEffect(wpData, 0, 50, 51)
 
 ####### Census Income dataset 
 ## rf     
@@ -597,6 +623,8 @@ cIRfTestAccuracy, cIRfValAccuracy, cIRfNoiseLevelPerc = rfNoiseEffect(cIData, 0,
 cIXgbTestAccuracy, cIXgbValAccuracy, cIXgbNoiseLevelPerc = xgbNoiseEffect(cIData, 0, 50, 51)
 ## dt 
 cIDtTestAccuracy, cIDtValAccuracy, cIDtNoiseLevelPerc = dtNoiseEffect(cIData, 0, 50, 51)
+## svm 
+cISvmTestAccuracy, cISvmValAccuracy, cISvmNoiseLevelPerc = svmNoiseEffect(cIData, 0, 50, 51)
 
 ###### Credit Card Default dataset 
 ## rf
@@ -605,7 +633,8 @@ cCDRfTestAccuracy, cCDRfValAccuracy, cCDRfNoiseLevelPerc = rfNoiseEffect(cCDData
 cCDXgbTestAccuracy, cCDXgbValAccuracy, cCDXgbNoiseLevelPerc = xgbNoiseEffect(cCDData, 0, 50, 51)
 ## dt 
 cCDDtTestAccuracy, cCDDtValAccuracy, cCDDtNoiseLevelPerc = dtNoiseEffect(cCDData, 0, 50, 51)
-
+## svm
+cCDSvmTestAccuracy, cCDSvmValAccuracy, cCDSvmNoiseLevelPerc = svmNoiseEffect(cCDData, 0, 50, 51)
 
 
 ############################ Plots ##############################

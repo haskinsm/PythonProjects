@@ -11,6 +11,7 @@ import xgboost
 import sys
 from sklearn import metrics
 
+
 class Model():
     """
     A class for creating xgboost models. Create instance of this class by passing in targetVarColName and a 
@@ -33,10 +34,12 @@ class Model():
             sys.exit() ## This will terminate the script execution
     
     
-    def createModel(self):
+    def createModel(self, nTrees = 100):
         # src: https://xgboost.readthedocs.io/en/latest/python/examples/sklearn_evals_result.html#sphx-glr-python-examples-sklearn-evals-result-py
         params = {
-            'objective': "binary:logistic"
+            'n_jobs': -1,  # use all processing cores
+            'objective': "binary:logistic",# indicate the target variable is binary 
+            'n_estimators': nTrees,
             }
         xgbModel = xgboost.XGBClassifier(**params)
         # About the parameters above:

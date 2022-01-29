@@ -40,7 +40,7 @@ class Model():
     A class for creating random forest models. Create instance of this class by passing in targetVarColName and a 
     Train, xTest, yTest, xValid and yValid datasets
     i.e. 
-    rf = RandomForest(targetVar, train, xTest, yTest, xValid, yValid)
+    rf = Model(targetVar, train, xTest, yTest, xValid, yValid)
     """
     def __init__(self, *args):
         if len(args) == 6:
@@ -52,12 +52,12 @@ class Model():
             self.yValid = args[5]
         else:
              print("You must pass in the target variable columns name, and a training, XTest, yTest, XValid and yValid pandas dataframes" + 
-                   " in the master script. E.g:  rf = RandomForest(targetVar, train, xTest, yTest, xValid, yValid) ")
+                   " in the master script. E.g:  rf = Model(targetVar, train, xTest, yTest, xValid, yValid) ")
              print("\nProgram Execution aborted. Goodbye.")
              sys.exit() ## This will terminate the script execution
             
             
-    def createModel(self):
+    def createModel(self, nTrees = 100):
         """ 
         Function for creating random forest models
         Parameters that will be used:
@@ -68,22 +68,15 @@ class Model():
         - verbose : Controls whether you want to output any text during the learning process. A value 
          of 0 suppresses all text while a value of 3 outputs the tree learning process at every iteration.
         """
-        #SEED = 123 ## For reproducibility 
-        # Some useful parameters which will come in handy later on
-        # ntrain = self.train.shape[0]
-        # ntest = self.test.shape[0]
-        #NFOLDS = 5 # set folds for out-of-fold prediction
-        #kf = KFold(n_splits=NFOLDS, random_state=SEED, shuffle=True) #*********************
         
         rf_params = {
-            'n_jobs': -1,  # use all cores
-            'n_estimators': 500, # 500 trees
-            'warm_start': True, 
-             #'max_features': 0.2,
-            'max_depth': 6,  # depth of tree
-            'min_samples_leaf': 2,
-            'max_features' : 'sqrt',
-            'verbose': 0
+            'n_jobs': -1,  # use all processing cores
+            'n_estimators': nTrees, # 500 trees
+            #'warm_start': True, 
+            #'max_depth': 8,  # depth of tree,(default = None)
+            'min_samples_leaf': 50, # Too small a number will result in overfitting 
+            'max_features' : 'sqrt', # Better than setting it as 0.2 due to size of datasets
+            'verbose': 0 #suppresses all text while a value of 3 outputs the tree learning process at every iteration
         }
         self.rfHelper = sklHelper.SklearnHelper(clf=RandomForestClassifier, params=rf_params)
         
