@@ -3,21 +3,49 @@
 Created on Sat Jan  8 15:50:20 2022
 
 @author: micha
+
+Script containing the class Model which is used to create XGBoost models, and calculate the models 
+accuracy when applied to the training and validation set.
+
+Classes:
+    Model 
 """
 
 import xgboost 
-#import pandas as pd
-#import numpy as np 
 import sys
 from sklearn import metrics
 
 
 class Model():
     """
-    A class for creating xgboost models. Create instance of this class by passing in targetVarColName and a 
-    Train, xTest, yTest, xValid and yValid datasets
-    i.e. creat an instance of this class in the master script with the following code
+    A class for creating XGBoost models. Example of creating instance of this class:
     xgb = Model(targetVar, train, xTest, yTest, xValid, yValid)
+    
+    Attributes
+    ----------
+    targetVarColName : string 
+        Name of target variable column in pandas dataframe
+    train: pandas dataframe
+        Pandas dataframe of training set 
+    xTest: pandas dataframe
+        Pandas dataframe of x (Explanatory) variables of test set 
+    yTest: pandas dataframe
+        Pandas dataframe of y (Target) variable of test set 
+    xValid: pandas dataframe
+        Pandas dataframe of x (Explanatory) variables of validation set
+    yValid: pandas dataframe
+        Pandas dataframe of y (Target) variable of validation set 
+       
+    Methods
+    -------
+    createModel():
+        Creates a Xgboost model (fitted to the training set)
+    modelAccuracy():
+        Gets decimal accuracy of model applied to the test set
+    validAccuracy():
+        Gets decimal accuracy of model applied to the valid set
+    
+     
     """
     def __init__(self, *args):
         if len(args) == 6:
@@ -35,6 +63,20 @@ class Model():
     
     
     def createModel(self, nTrees = 100):
+        """
+        Function for creating Xgboost models. The created model will be saved to this instance of the object and 
+        nothing will be returned. 
+
+        Parameters
+        ----------
+        nTrees : int, optional
+            DESCRIPTION. Optionally specify the number of estimators to use. The default is 100.
+
+        Returns
+        -------
+        None.
+
+        """
         # src: https://xgboost.readthedocs.io/en/latest/python/examples/sklearn_evals_result.html#sphx-glr-python-examples-sklearn-evals-result-py
         params = {
             'n_jobs': -1,  # use all processing cores
@@ -54,18 +96,35 @@ class Model():
         #print(evals_result)
         
     def modelAccuracy(self):
-        """ Returns decimal accuracy of xgboost model applied to the Test set. E.g. 0.9210..."""
+        """
+        Returns decimal accuracy of Xgboost model applied to the Test set. E.g. 0.9210...
+
+        Returns
+        -------
+        float
+            Decimal accuracy of the model applied to the test set.  E.g. 0.9210...
+
+        """
+        
         ## Make predictions using the model
         yTestPred = self.xgb.predict(self.xTest) 
         ## Return the accuracy of the model when applied to the test set 
         return (metrics.accuracy_score(self.yTest, yTestPred)) 
     
     def validAccuracy(self):
-       """ Return decimal accuracy of xgboost model when applied to the Validation set """ 
-       ## Make predictions using the model 
-       yValidPred = self.xgb.predict(self.xValid)
-       ## Return the accuracy of the model when applied ot the validation set 
-       return (metrics.accuracy_score(self.yValid, yValidPred))
+        """
+        Return decimal accuracy of Xgboost model when applied to the Validation set
+
+        Returns
+        -------
+        float
+            decimal accuracy of support vector machine model applied to validation set
+
+        """
+        ## Make predictions using the model 
+        yValidPred = self.xgb.predict(self.xValid)
+        ## Return the accuracy of the model when applied ot the validation set 
+        return (metrics.accuracy_score(self.yValid, yValidPred))
         
     
     

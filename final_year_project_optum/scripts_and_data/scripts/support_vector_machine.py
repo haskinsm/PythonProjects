@@ -3,6 +3,12 @@
 Created on Sat Jan 29 21:17:37 2022
 
 @author: micha
+
+Script containing the class Model which is used to create support vector machine models, and calculate the models 
+accuracy when applied to the training and validation set.
+
+Classes:
+    Model  
 """
 
 from sklearn import svm
@@ -11,10 +17,34 @@ import sys
 
 class Model():
     """
-    A class for creating support vector machine models. Create instance of this class by passing in targetVarColName and a 
-    Train, xTest, yTest, xValid and yValid datasets
-    i.e. 
+    A class for creating support vector machine models. Example of creating instance of this class:
     svm = Model(targetVar, train, xTest, yTest, xValid, yValid)
+    
+    Attributes
+    ----------
+    targetVarColName : string 
+        Name of target variable column in pandas dataframe
+    train: pandas dataframe
+        Pandas dataframe of training set 
+    xTest: pandas dataframe
+        Pandas dataframe of x (Explanatory) variables of test set 
+    yTest: pandas dataframe
+        Pandas dataframe of y (Target) variable of test set 
+    xValid: pandas dataframe
+        Pandas dataframe of x (Explanatory) variables of validation set
+    yValid: pandas dataframe
+        Pandas dataframe of y (Target) variable of validation set 
+       
+    Methods
+    -------
+    createModel():
+        Creates a support vector machine model (fitted to the training set)
+    modelAccuracy():
+        Gets decimal accuracy of model applied to the test set
+    validAccuracy():
+        Gets decimal accuracy of model applied to the valid set
+    
+     
     """
     def __init__(self, *args):
         if len(args) == 6:
@@ -31,11 +61,20 @@ class Model():
              sys.exit() ## This will terminate the script execution
             
             
-    def createModel(self, nTrees = 500):
-        """ 
-        Function for creating support vector machine models
+    def createModel(self):
         """
-        
+        Function for creating support vector machine models. The created model will be saved to this instance of this object and 
+        nothing will be returned. 
+
+        Parameters
+        ----------
+        None.
+
+        Returns
+        -------
+        None.
+
+        """
         svmModel = svm.SVC()
         
         ## Train the model using the training sets
@@ -44,7 +83,15 @@ class Model():
      
         
     def modelAccuracy(self):
-        """ Returns decimal accuracy of support vector machine model applied to the Test set. E.g. 0.9210..."""
+        """
+        Returns decimal accuracy of support vector machine model applied to the Test set. E.g. 0.9210...
+
+        Returns
+        -------
+        float
+            Decimal accuracy of the model applied to the test set.  E.g. 0.9210...
+
+        """
         ## Make predictions using the model
         yTestPred = self.svm.predict(self.xTest) 
         ## Return the accuracy of the model when applied to the test set 
@@ -52,7 +99,15 @@ class Model():
     
     
     def validAccuracy(self):
-        """ Return decimal accuracy of support vector machine model when applied to the Validation set """ 
+        """
+        Return decimal accuracy of support vector machine model when applied to the Validation set
+
+        Returns
+        -------
+        float
+            decimal accuracy of support vector machine model applied to validation set
+
+        """
         ## Make predictions using the model 
         yValidPred = self.svm.predict(self.xValid)
         ## Return the accuracy of the model when applied ot the validation set 

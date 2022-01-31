@@ -4,43 +4,58 @@ Created on Mon Nov  1 10:56:10 2021
 
 @author: micha
 
-sources:
-    - https://www.kaggle.com/arthurtok/introduction-to-ensembling-stacking-in-python 
+Script containing the class Model which is used to create Random Forest models, and calculate the models 
+accuracy when applied to the training and validation set.
+
+Classes:
+    Model 
 """
 import pandas as pd
 import numpy as np
 import sys
-#import re
-#import sklearn
-# import xgboost as xgb
-#import seaborn as sns
-#import matplotlib.pyplot as plt
-#'exec(%matplotlib inline)'
-
 import plotly.offline as py
 py.init_notebook_mode(connected=True)
 import plotly.graph_objs as go
-#import plotly.tools as tls
-
 import warnings
 warnings.filterwarnings('ignore')
-
 from sklearn.ensemble import RandomForestClassifier
-#from sklearn.svm import SVC
-#from sklearn.model_selection import KFold
 from sklearn import metrics
 
 # Files I've written
-import sklearn_helper as sklHelper #### Make sure your in the general directory for this to work
-# i.e. C:\Users\micha\Documents\3rd year\Software Applications\PythonSpyder(Anaconda V)\final_year_project_optum *************
-
+import sklearn_helper as sklHelper 
 
 class Model():
     """
-    A class for creating random forest models. Create instance of this class by passing in targetVarColName and a 
-    Train, xTest, yTest, xValid and yValid datasets
-    i.e. 
+    A class for creating Random Forest models. Example of creating instance of this class:
     rf = Model(targetVar, train, xTest, yTest, xValid, yValid)
+    
+    Attributes
+    ----------
+    targetVarColName : string 
+        Name of target variable column in pandas dataframe
+    train: pandas dataframe
+        Pandas dataframe of training set 
+    xTest: pandas dataframe
+        Pandas dataframe of x (Explanatory) variables of test set 
+    yTest: pandas dataframe
+        Pandas dataframe of y (Target) variable of test set 
+    xValid: pandas dataframe
+        Pandas dataframe of x (Explanatory) variables of validation set
+    yValid: pandas dataframe
+        Pandas dataframe of y (Target) variable of validation set 
+       
+    Methods
+    -------
+    createModel():
+        Creates a Random Forest model (fitted to the training set)
+    modelAccuracy():
+        Gets decimal accuracy of model applied to the test set
+    validAccuracy():
+        Gets decimal accuracy of model applied to the valid set
+    featureImportance():
+        Returns a figure showcasing the importance of the datasets features to the model
+    
+     
     """
     def __init__(self, *args):
         if len(args) == 6:
@@ -58,17 +73,20 @@ class Model():
             
             
     def createModel(self, nTrees = 100):
-        """ 
-        Function for creating random forest models
-        Parameters that will be used:
-        - n_jobs : Number of cores used for the training process. If set to -1, all cores are used.
-        - n_estimators : Number of classification trees in your learning model ( set to 10 per default)
-        - max_depth : Maximum depth of tree, or how much a node should be expanded. Beware if set to too
-         high a number would run the risk of overfitting as one would be growing the tree too deep
-        - verbose : Controls whether you want to output any text during the learning process. A value 
-         of 0 suppresses all text while a value of 3 outputs the tree learning process at every iteration.
         """
-        
+        Function for creating Random Forest models. The created model will be saved to this instance of the object and 
+        nothing will be returned.
+
+        Parameters
+        ----------
+        nTrees : int, optional
+            DESCRIPTION. Optionally set the number of trees in the random forest model. The default is 100.
+
+        Returns
+        -------
+        None.
+
+        """
         rf_params = {
             'n_jobs': -1,  # use all processing cores
             'n_estimators': nTrees, # 500 trees
@@ -105,7 +123,15 @@ class Model():
      
         
     def modelAccuracy(self):
-        """ Returns decimal accuracy of random forest model applied to the Test set. E.g. 0.9210..."""
+        """
+        Returns decimal accuracy of Random Forest model applied to the Test set. E.g. 0.9210...
+
+        Returns
+        -------
+        float
+            Decimal accuracy of the model applied to the test set.  E.g. 0.9210...
+
+        """
         ## Make predictions using the model
         yTestPred = self.rf.predict(self.xTest) 
         ## Return the accuracy of the model when applied to the test set 
@@ -113,7 +139,15 @@ class Model():
     
     
     def validAccuracy(self):
-        """ Return decimal accuracy of random forest model when applied to the Validation set """ 
+        """
+        Return decimal accuracy of Random Forest model when applied to the Validation set
+
+        Returns
+        -------
+        float
+            decimal accuracy of support vector machine model applied to validation set
+
+        """ 
         ## Make predictions using the model 
         yValidPred = self.rf.predict(self.xValid)
         ## Return the accuracy of the model when applied ot the validation set 
