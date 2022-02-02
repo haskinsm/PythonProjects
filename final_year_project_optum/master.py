@@ -3,9 +3,27 @@
 Created on Mon Nov  1 15:02:43 2021
 
 @author: micha
+
+This is the master script of the module from which instances can be created of 
+machine learning algorthm classes such as Random forest, support vector machine, 
+decision trees, and XGBoost
+
+Functions:
+    getCooksDistance()
+    insertingNoise()
+        Helper functions of this function:
+            insertingNoiseTestSet()
+    noiseEffect()
+        Helper functions of this function:
+            rfNoiseEffect()
+            xgbNoiseEffect()
+            dtNoiseEffect()
+            svmNoiseEffect()
+    createSingleNoiseEffectPlot()
+    createMlAlgorithmNoiseEffectPlot()
+    createMultipleNoiseEffectPlot()
 """
 import os
-#import numpy as np 
 import pandas as pd 
 #from sklearn.linear_model import LinearRegression
 #from yellowbrick.regressor import CooksDistance
@@ -13,8 +31,7 @@ import matplotlib.pyplot as plt
 from yellowbrick.regressor import cooks_distance
 import statistics
 
-
-# Change directory to correctDir or script wont run correctly
+# Change directory to correctDir or script won't run correctly
 CORRECTDIR = "C:\\Users\\micha\\Documents\\3rd year\\Software Applications\\PythonSpyder(Anaconda V)\\final_year_project_optum"
 os.chdir(CORRECTDIR)
 ##### Import scripts I've written. Do this after changed to correct directory ###########################
@@ -22,80 +39,33 @@ import scripts_and_data
 
 
 
-################################# Basic system testing immediatly below #####################################
+################   Create references to the classes of the ML Algorithms and the datasets ################
 
-######### WaterPump (wp) Dataset ##########
+######### Datasets 
+#### WaterPump (wp) Dataset 
 wpData = scripts_and_data.data.water_pump_dataset.WaterPump # reference of class WaterPump 
 
-##### Random Forest
-# create shorter reference
-rf = scripts_and_data.scripts.random_forest # reference of script random_forest
-# create instance of random forest class 
-wpRfObj = rf.Model(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
-wpRfObj.createModel() # train the model
-wpRfTest = wpRfObj.modelAccuracy() # get model test accuracy 
-wpRfVal = wpRfObj.validAccuracy() # get model valid accuracy 
-wpRfFeatureImpPlot = wpRfObj.featureImportance() # get plot of feature importance 
-wpRfFeatureImpPlot.show(renderer="png") # render plot of feature importance 
-
-##### XGBoost
-# create shorter reference
-xgb = scripts_and_data.scripts.xgboost_script 
-# create instance of xgboost class 
-wpXgbObj = xgb.Model(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
-wpXgbObj.createModel() # train the model
-wpXgbTest = wpXgbObj.modelAccuracy() # get model test accuracy 
-wpXgbVal =  wpXgbObj.validAccuracy() # get valid accuracy 
-
-
-##### Decision Tree
-# create shorter reference 
-dt = scripts_and_data.scripts.decision_tree
-# create instance of decsion tree class
-wpDtObj = dt.Model(wpData.TARGET_VAR_NAME, wpData.TRAIN, wpData.XTEST, wpData.YTEST, wpData.XVALID, wpData.YVALID)
-wpDtObj.createModel() # train the model
-wpDtTest = wpDtObj.modelAccuracy() # get model test accuracy 
-wpDtVal =  wpDtObj.validAccuracy() # get valid accuracy 
-
-
-########## Census Income dataset #######################
+#### Census Income dataset 
 cIData = scripts_and_data.data.census_income_dataset.CensusIncome
 
-##### Random Forest
-# create shorter reference
-rf = scripts_and_data.scripts.random_forest # reference of script random_forest
-# create instance of random forest class 
-cIRfObj = rf.Model(cIData.TARGET_VAR_NAME, cIData.TRAIN, cIData.XTEST, cIData.YTEST, cIData.XVALID, cIData.YVALID)
-cIRfObj.createModel() # train the model
-cIRfTest = cIRfObj.modelAccuracy() # get model test accuracy 
-cIRfVal = cIRfObj.validAccuracy() # get model valid accuracy
-cIRfFeatureImpPlot = cIRfObj.featureImportance() # get plot of feature importance 
-#cIRfFeatureImpPlot.show(renderer="png") # render plot of feature importance
-
-########## Credit Card Default dataset ###################
+#### Credit Card Default dataset 
 cCDData = scripts_and_data.data.credit_card_default_dataset.CreditCardDefault
 
-##### Random Forest 
-# create shorter reference
-rf = scripts_and_data.scripts.random_forest # reference of script random_forest
-# create instance of random forest class 
-cCDRfObj = rf.Model(cCDData.TARGET_VAR_NAME, cCDData.TRAIN, cCDData.XTEST, cCDData.YTEST, cCDData.XVALID, cCDData.YVALID)
-cCDRfObj.createModel() # train the model
-cCDRfTest = cCDRfObj.modelAccuracy() # get model test accuracy 
-cCDRfVal = cCDRfObj.validAccuracy() # get model valid accuracy
-cCDRfFeatureImpPlot = cCDRfObj.featureImportance() # get plot of feature importance 
-#cCDRfFeatureImpPlot.show(renderer="png") # render plot of feature importance
+
+######### Machine Learning Algorithms 
+##### Random Forest
+rf = scripts_and_data.scripts.random_forest 
+
+##### XGBoost
+xgb = scripts_and_data.scripts.xgboost_script 
+
+##### Decision Tree
+dt = scripts_and_data.scripts.decision_tree
 
 ##### Support vector machine
-# create shorter reference 
 svm = scripts_and_data.scripts.support_vector_machine
-# create instance of class 
-cCDSvmObj = svm.Model(cCDData.TARGET_VAR_NAME, cCDData.TRAIN, cCDData.XTEST, cCDData.YTEST, cCDData.XVALID, cCDData.YVALID)
-cCDSvmObj.createModel()
-cCDSvmTest = cCDSvmObj.modelAccuracy()
-cCDSvmVal = cCDSvmObj.validAccuracy()
 
-################################# End of basic system testing ##############################
+
 
 def getCooksDistance(data):
     """
@@ -138,9 +108,6 @@ def getCooksDistance(data):
     #viz.fit(predictorData, targetData)
     
     return cooksD
-
-cooksDist = getCooksDistance(wpData.TRAIN)
-cooksDist.show()
 
 
 def insertingNoise(data, noisePerc):
@@ -316,6 +283,9 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoise
             testAccuaracyAtIncrement.append(rfTestAccuracy)
             rfValAccuaracy = obj.validAccuracy()
             valAccuaracyAtIncrement.append(rfValAccuaracy)
+            
+            # delete variables that take up a lot of space
+            del train, xTest, yTest, obj
             
         testAccuracy.append(statistics.mean(testAccuaracyAtIncrement))
         valAccuracy.append(statistics.mean(valAccuaracyAtIncrement))
@@ -527,43 +497,43 @@ def createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAc
 
     Parameters
     ----------
-    wpRfTestAccuracy : TYPE
+    wpRfTestAccuracy : [float]
         DESCRIPTION.
-    wpRfValAccuracy : TYPE
+    wpRfValAccuracy : [float]
         DESCRIPTION.
-    wpXgbTestAccuracy : TYPE
+    wpXgbTestAccuracy : [float]
         DESCRIPTION.
-    wpXgbValAccuracy : TYPE
+    wpXgbValAccuracy : [float]
         DESCRIPTION.
-    wpDtTestAccuracy : TYPE
+    wpDtTestAccuracy : [float]
         DESCRIPTION.
-    wpDtValAccuracy : TYPE
+    wpDtValAccuracy : [float]
         DESCRIPTION.
-    cIRfTestAccuracy : TYPE
+    cIRfTestAccuracy : [float]
         DESCRIPTION.
-    cIRfValAccuracy : TYPE
+    cIRfValAccuracy : [float]
         DESCRIPTION.
-    cIXgbTestAccuracy : TYPE
+    cIXgbTestAccuracy : [float]
         DESCRIPTION.
-    cIXgbValAccuracy : TYPE
+    cIXgbValAccuracy : [float]
         DESCRIPTION.
-    cIDtTestAccuracy : TYPE
+    cIDtTestAccuracy : [float]
         DESCRIPTION.
-    cIDtValAccuracy : TYPE
+    cIDtValAccuracy : [float]
         DESCRIPTION.
-    cCDRfTestAccuracy : TYPE
+    cCDRfTestAccuracy : [float]
         DESCRIPTION.
-    cCDRfValAccuracy : TYPE
+    cCDRfValAccuracy : [float]
         DESCRIPTION.
-    cCDXgbTestAccuracy : TYPE
+    cCDXgbTestAccuracy : [float]
         DESCRIPTION.
-    cCDXgbValAccuracy : TYPE
+    cCDXgbValAccuracy : [float]
         DESCRIPTION.
-    cCDDtTestAccuracy : TYPE
+    cCDDtTestAccuracy : [float]
         DESCRIPTION.
-    cCDDtValAccuracy : TYPE
+    cCDDtValAccuracy : [float]
         DESCRIPTION.
-    noiseLevelPerc : TYPE
+    noiseLevelPerc : [float]
         DESCRIPTION.
 
     Returns
@@ -602,7 +572,11 @@ def createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAc
     plt.suptitle("Average Noise Effect on Machine Learning Algorithms Accuracy", fontsize=18)
     plt.title("Note: Noise randomly inserted to binary target variable in training and test sets", fontsize=12)
   
-    
+
+
+############ Cooks distance 
+cooksDist = getCooksDistance(wpData.TRAIN)
+cooksDist.show()
   
     
 ########### Get accuracy of specifc datasets and algorithms for specific noise levels ########
@@ -696,7 +670,24 @@ createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAccura
                               cIRfTestAccuracy, cIRfValAccuracy, cIXgbTestAccuracy, cIXgbValAccuracy, cIDtTestAccuracy, cIDtValAccuracy,
                               cCDRfTestAccuracy, cCDRfValAccuracy, cCDXgbTestAccuracy, cCDXgbValAccuracy, cCDDtTestAccuracy, cCDDtValAccuracy,
                               wpRfNoiseLevelPerc)
-
-   
+  
       
+
+
+
+################## Saving results ###########
+##### Due to long running time 
+# Store Results in Dict  
+dataDict = {"rfWpTest": wpRfTestAccuracy, "rfWpVal": wpRfValAccuracy, "xgbWpTest": wpXgbTestAccuracy, "xgbWpVal": wpXgbValAccuracy,
+            "dtWpTest": wpDtTestAccuracy, "dtWpVal": wpDtValAccuracy, "svmWpTest": wpSvmTestAccuracy, "svmWpVal": wpSvmValAccuracy,
+            "rfCiTest": cIRfTestAccuracy, "rfCiVal": cIRfValAccuracy, "xgbCiTest": cIXgbTestAccuracy, "xgbCiVal": cIXgbValAccuracy,
+            "dtCiTest": cIDtTestAccuracy, "dtCiVal": cIDtValAccuracy, "svmCiTest": cISvmTestAccuracy, "svmCiVal": cISvmValAccuracy,
+            "rfCCdTest": cCDRfTestAccuracy, "rfCCdVal": cCDRfValAccuracy, "xgbCCdTest": cCDXgbTestAccuracy, "xgbCCdVal": cCDXgbValAccuracy,
+            "dtCCdTest": cCDDtTestAccuracy, "dtCCdVal": cCDDtValAccuracy, "svmCCdTest": cCDSvmTestAccuracy, "svmCCdVal": cCDSvmValAccuracy}
+dataItems = dataDict.items()
+dataList = list(dataItems)
+df = pd.DataFrame(dataList)
+csvFilePath = os.path.join(CORRECTDIR, "\\accuracy_results.csv")
+# Save results as a csv file
+df.to_csv(csvFilePath, header = True, index = True)
 
