@@ -66,49 +66,8 @@ dt = scripts_and_data.scripts.decision_tree
 svm = scripts_and_data.scripts.support_vector_machine
 
 
-
-def getCooksDistance(data):
-    """
-    Function to get cooks distance for a pandas dataframe
-    
-    This function takes in a pandas dataframe and returns an object of yellowbrick.regressor.influence.
-    A plot n then be called from this returned object using the method .show()
-
-    
-    src: https://www.scikit-yb.org/en/latest/api/regressor/influence.html
-    Similar src: https://coderzcolumn.com/tutorials/machine-learning/yellowbrick-visualize-sklearn-classification-and-regression-metrics-in-python#regression_4
-    Parameters
-    ----------
-    data : pandas dataframe
-        DESCRIPTION. This should be a pandas dataframe 
-
-    Returns
-    -------
-    cooksD : Object of yellowbrick.regressor.influence
-        DESCRIPTION. cooksDist = getCooksDistance(wpData.TRAIN)   
-                     cooksDist.show() # show the plot of cooks distance    
-    """
-    targetVar = data.columns[-1]
-    targetData = data[targetVar]
-    predictors = list(data.columns[:-1])
-    predictorData = data[predictors]
-    
-    #predictorData = np.nan_to_num(predictorData.astype(np.float64)) # This will convert everything to float 32 and if this results in inf they will be converted to max float 64
-    
-    # Instantiate and fit the visualizer
-    cooksD = cooks_distance(
-        predictorData, targetData,
-        draw_threshold=True,
-        linefmt="C0-", markerfmt=",",
-        fig=plt.figure(figsize=(12,7))
-    )
-    
-    ##### Seperate attempt #####
-    #viz = CooksDistance(fig=plt.figure(figsize=(9,7)))
-    #viz.fit(predictorData, targetData)
-    
-    return cooksD
-
+######################################################################################################################
+######################################### Examine noise effect on ML algortihms ######################################
 
 def insertingNoise(data, noisePerc):
     """
@@ -217,7 +176,7 @@ noiseXTest, noiseYTest = insertingNoiseTestSet(wpData.XTEST, wpData.YTEST, 1)
 
 ## Now write functions to add noise over a specified range, and then plot the resulting change in accuracy 
 
-def noiseEffect(mlAlgoScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
+def noiseEffect(mlAlgoScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nTrees):
     """
     This function adds noise at increments over a specified range to a dataset and calculates the acccuracy of a Machine Learning algorithm when 
     applied to the dataset. 
@@ -268,7 +227,7 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoise
     #rf = scripts_and_data.scripts.random_forest # reference to random_forest script
     
     noiseIncrements = round((noiseEndPerc - noiseStartPerc)/numNoiseIncrements)
-    for x in range(noiseStartPerc, noiseEndPerc, noiseIncrements):
+    for x in range(noiseStartPerc, noiseEndPerc + 1, noiseIncrements):
         
         # Get average accuracy at this perc noise interval
         testAccuaracyAtIncrement = []
@@ -277,7 +236,7 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoise
             train = insertingNoise(dataRef.TRAIN, x)
             xTest, yTest = insertingNoiseTestSet(dataRef.XTEST, dataRef.YTEST, x)
             obj = mlAlgoScriptRef.Model(dataRef.TARGET_VAR_NAME, train, xTest, yTest, dataRef.XVALID, dataRef.YVALID)
-            obj.createModel() # train the model
+            obj.createModel(nTrees) # train the model (If an argument is passed to a function that takes no arguments, the argument will be ignored)
             # Get and append model test and validation accuracy
             rfTestAccuracy = obj.modelAccuracy() 
             testAccuaracyAtIncrement.append(rfTestAccuracy)
@@ -293,7 +252,7 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoise
     
     return testAccuracy, valAccuracy, noiseLevelPerc
         
-def rfNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
+def rfNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nTrees = 100):
     """
     Helper Function for general noise Effect function. This will call the noiseEffect function 
     will add noise to data used to train random forest models
@@ -320,9 +279,9 @@ def rfNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
 
     """
     rfScriptRef = scripts_and_data.scripts.random_forest
-    return noiseEffect(rfScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements)
+    return noiseEffect(rfScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nTrees)
 
-def xgbNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
+def xgbNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nTrees = 100):
     """
     Helper Function for general noise Effect function. This will call the noiseEffect function 
     will add noise to data used to train xgboost models
@@ -572,11 +531,6 @@ def createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAc
     plt.suptitle("Average Noise Effect on Machine Learning Algorithms Accuracy", fontsize=18)
     plt.title("Note: Noise randomly inserted to binary target variable in training and test sets", fontsize=12)
   
-
-
-############ Cooks distance 
-cooksDist = getCooksDistance(wpData.TRAIN)
-cooksDist.show()
   
     
 ########### Get accuracy of specifc datasets and algorithms for specific noise levels ########
@@ -623,7 +577,9 @@ createSingleNoiseEffectPlot(wpXgbTestAccuracy, wpXgbValAccuracy, wpXgbNoiseLevel
 ## dt
 createSingleNoiseEffectPlot(wpDtTestAccuracy, wpDtValAccuracy, wpDtNoiseLevelPerc, 
                             "Water Pump dataset", "Decsion Tree")
-
+## svm
+createSingleNoiseEffectPlot(wpSvmTestAccuracy, wpSvmValAccuracy, wpSvmNoiseLevelPerc, 
+                            "Water Pump dataset", "Support Vector Machine")
 
 #### Census Income 
 ## rf
@@ -635,6 +591,9 @@ createSingleNoiseEffectPlot(cIXgbTestAccuracy, cIXgbValAccuracy, cIXgbNoiseLevel
 ## dt
 createSingleNoiseEffectPlot(cIDtTestAccuracy, cIDtValAccuracy, cIDtNoiseLevelPerc, 
                             "Census Income dataset", "Decison Tree")
+## svm 
+createSingleNoiseEffectPlot(cISvmTestAccuracy, cISvmValAccuracy, cISvmNoiseLevelPerc, 
+                            "Census Income dataset", "Support Vector Machine")
    
 #### Credit Card Default  
 ## rf
@@ -646,6 +605,9 @@ createSingleNoiseEffectPlot(cCDXgbTestAccuracy, cCDXgbValAccuracy, cCDXgbNoiseLe
 ## dt
 createSingleNoiseEffectPlot(cCDDtTestAccuracy, cCDDtValAccuracy, cCDDtNoiseLevelPerc, 
                             "Credit Card Default dataset", "Decison Tree")
+## svm 
+createSingleNoiseEffectPlot(cCDSvmTestAccuracy, cCDSvmValAccuracy, cCDSvmNoiseLevelPerc, 
+                            "Credit Card Default dataset", "Support Vector Machine")
    
 
 #############  Noise Effect for specific ml algorithm on multiple datasets ######
@@ -664,6 +626,13 @@ createMlAlgorithmNoiseEffectPlot(wpDtTestAccuracy, wpDtValAccuracy,
                                  cIDtTestAccuracy, cIDtValAccuracy,
                                  cCDDtTestAccuracy, cCDDtValAccuracy,
                                  wpDtNoiseLevelPerc, "Decison Tree")
+
+#### svm
+createMlAlgorithmNoiseEffectPlot(wpSvmTestAccuracy, wpSvmValAccuracy,
+                                 cISvmTestAccuracy, cISvmValAccuracy,
+                                 cCDSvmTestAccuracy, cCDSvmValAccuracy,
+                                 wpSvmNoiseLevelPerc, "Support Vector Machine")
+
 
 ############## Average Ml Accuarcy for multiple datasets when noise is inserted #######
 createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAccuracy, wpXgbValAccuracy, wpDtTestAccuracy, wpDtValAccuracy,
@@ -689,5 +658,111 @@ dataList = list(dataItems)
 df = pd.DataFrame(dataList)
 csvFilePath = os.path.join(CORRECTDIR, "\\accuracy_results.csv")
 # Save results as a csv file
-df.to_csv(csvFilePath, header = True, index = True)
+df.to_csv(csvFilePath, header = True)
+
+
+
+
+###################################################################################################################################
+################################ Trialing potential Methods of Mitigating Noise ###################################################
+
+########################### Using cooks distance to remove influential datapoints #####################
+def getCooksDistance(data):
+    """
+    Function to get cooks distance for a pandas dataframe
+    
+    This function takes in a pandas dataframe and returns an object of yellowbrick.regressor.influence.
+    A plot n then be called from this returned object using the method .show()
+
+    
+    src: https://www.scikit-yb.org/en/latest/api/regressor/influence.html
+    Similar src: https://coderzcolumn.com/tutorials/machine-learning/yellowbrick-visualize-sklearn-classification-and-regression-metrics-in-python#regression_4
+    Parameters
+    ----------
+    data : pandas dataframe
+        DESCRIPTION. This should be a pandas dataframe 
+
+    Returns
+    -------
+    cooksD : Object of yellowbrick.regressor.influence
+        DESCRIPTION. cooksDist = getCooksDistance(wpData.TRAIN)   
+                     cooksDist.show() # show the plot of cooks distance    
+    """
+    targetVar = data.columns[-1]
+    targetData = data[targetVar]
+    predictors = list(data.columns[:-1])
+    predictorData = data[predictors]
+    
+    #predictorData = np.nan_to_num(predictorData.astype(np.float64)) # This will convert everything to float 32 and if this results in inf they will be converted to max float 64
+    
+    # Instantiate and fit the visualizer
+    cooksD = cooks_distance(
+        predictorData, targetData,
+        draw_threshold=True,
+        linefmt="C0-", markerfmt=",",
+        fig=plt.figure(figsize=(12,7))
+    )
+    
+    ##### Seperate attempt #####
+    #viz = CooksDistance(fig=plt.figure(figsize=(9,7)))
+    #viz.fit(predictorData, targetData)
+    
+    return cooksD
+
+
+##### Cooks distance 
+cooksDist = getCooksDistance(wpData.TRAIN)
+cooksDist.show()
+
+
+
+
+
+
+############################ Test if the number of trees provides insulation against noise ######################
+def createTreesNoiseInsulationPlot(rfTest20T, rfVal20T, rfTest60T, rfVal60T, rfTest100T, rfVal100T,
+                                   rfTest200T, rfVal200T, rfTest500T, rfVal500T, noiseLevelPerc):
+    plt.plot(noiseLevelPerc, rfTest20T, color = 'pink', ls = '--', label = "20 Trees Test")
+    plt.plot(noiseLevelPerc, rfVal20T, color = 'pink', ls = ':', label = "20 Trees Val")
+    plt.plot(noiseLevelPerc, rfTest60T, color = 'coral', ls = '--', label = "60 Trees Test")
+    plt.plot(noiseLevelPerc, rfVal60T, color = 'coral', ls = ':', label = "60 Trees Val")
+    plt.plot(noiseLevelPerc, rfTest100T, color = 'orangered', ls = '--', label = "100 Trees Test")
+    plt.plot(noiseLevelPerc, rfVal100T, color = 'orangered', ls = ':', label = "100 Trees Val")
+    plt.plot(noiseLevelPerc, rfTest200T, color = 'indianred', ls = '--', label = "200 Trees Test")
+    plt.plot(noiseLevelPerc, rfVal200T, color = 'indianred', ls = ':', label = "200 Trees Val")
+    plt.plot(noiseLevelPerc, rfTest500T, color = 'maroon', ls = '--', label = "500 Trees Test")
+    plt.plot(noiseLevelPerc, rfVal500T, color = 'maroon', ls = ':', label = "500 Trees Val")
+    
+    plt.legend()
+    plt.xlabel("Noise %")
+    plt.ylabel("Average Accuracy %")
+    plt.suptitle("Insualtion against Noise Effect on Random Forest Accuracy Provided by Number of Trees", fontsize=18)
+    plt.title("Note: Noise randomly inserted to binary target variable in training and test sets", fontsize=12)
+
+
+######## Random Forest
+## 20 trees
+wpRfTest20T, wpRfVal20T, wpRfNoiseLevelPerc20T = rfNoiseEffect(wpData, 0, 50, 51, nTrees = 20)
+## 60 trees
+wpRfTest60T, wpRfVal60T, wpRfNoiseLevelPerc60T = rfNoiseEffect(wpData, 0, 50, 51, nTrees = 60)
+## 100 trees
+# This is the deafult which has already been run. Results stored in vars: wpRfTestAccuracy, wpRfValAccuracy, wpRfNoiseLevelPerc
+wpRfTest100T, wpRfVal100T = wpRfTestAccuracy, wpRfValAccuracy
+## 200 trees
+wpRfTest200T, wpRfVal200T, wpRfNoiseLevelPerc200T = rfNoiseEffect(wpData, 0, 50, 51, nTrees = 200)
+## 500 trees
+wpRfTest500T, wpRfVal500T, wpRfNoiseLevelPerc500T = rfNoiseEffect(wpData, 0, 50, 51, nTrees = 500)
+
+
+##### Generate plot
+createTreesNoiseInsulationPlot(wpRfTest20T, wpRfVal20T, wpRfTest60T, wpRfVal60T, wpRfTest100T, wpRfVal100T,
+                               wpRfTest200T, wpRfVal200T, wpRfTest500T, wpRfVal500T, wpRfNoiseLevelPerc20T)
+
+
+
+
+
+
+
+
 
