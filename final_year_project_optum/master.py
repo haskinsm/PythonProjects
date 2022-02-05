@@ -169,8 +169,8 @@ def insertingNoiseTestSet(xTest, yTest, noisePerc):
     noiseYTest = noiseDf.iloc[:, -1]
     return noiseXTest, noiseYTest
 
-noiseTrain = insertingNoise(wpData.TRAIN, 1)
-noiseXTest, noiseYTest = insertingNoiseTestSet(wpData.XTEST, wpData.YTEST, 1)
+#noiseTrain = insertingNoise(wpData.TRAIN, 1)
+#noiseXTest, noiseYTest = insertingNoiseTestSet(wpData.XTEST, wpData.YTEST, 1)
 
 
 
@@ -238,10 +238,10 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoise
             obj = mlAlgoScriptRef.Model(dataRef.TARGET_VAR_NAME, train, xTest, yTest, dataRef.XVALID, dataRef.YVALID)
             obj.createModel(nTrees) # train the model (If an argument is passed to a function that takes no arguments, the argument will be ignored)
             # Get and append model test and validation accuracy
-            rfTestAccuracy = obj.modelAccuracy() 
-            testAccuaracyAtIncrement.append(rfTestAccuracy)
-            rfValAccuaracy = obj.validAccuracy()
-            valAccuaracyAtIncrement.append(rfValAccuaracy)
+            modelTestAccuracy = obj.modelAccuracy() 
+            testAccuaracyAtIncrement.append(modelTestAccuracy)
+            modelValAccuaracy = obj.validAccuracy()
+            valAccuaracyAtIncrement.append(modelValAccuaracy)
             
             # delete variables that take up a lot of space
             del train, xTest, yTest, obj
@@ -532,7 +532,7 @@ def createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAc
     plt.title("Note: Noise randomly inserted to binary target variable in training and test sets", fontsize=12)
   
   
-    
+"""
 ########### Get accuracy of specifc datasets and algorithms for specific noise levels ########
 ####### WaterPump dataset 
 ## rf     
@@ -661,7 +661,7 @@ csvFilePath = os.path.join(CORRECTDIR, "\\accuracy_results.csv")
 df.to_csv(csvFilePath, header = True)
 
 
-
+"""
 
 ###################################################################################################################################
 ################################ Trialing potential Methods of Mitigating Noise ###################################################
@@ -674,9 +674,9 @@ def getCooksDistance(data):
     This function takes in a pandas dataframe and returns an object of yellowbrick.regressor.influence.
     A plot n then be called from this returned object using the method .show()
 
-    
-    src: https://www.scikit-yb.org/en/latest/api/regressor/influence.html
+    src documenation: https://www.scikit-yb.org/en/latest/api/regressor/influence.html
     Similar src: https://coderzcolumn.com/tutorials/machine-learning/yellowbrick-visualize-sklearn-classification-and-regression-metrics-in-python#regression_4
+    
     Parameters
     ----------
     data : pandas dataframe
@@ -703,40 +703,122 @@ def getCooksDistance(data):
         fig=plt.figure(figsize=(12,7))
     )
     
-    ##### Seperate attempt #####
-    #viz = CooksDistance(fig=plt.figure(figsize=(9,7)))
-    #viz.fit(predictorData, targetData)
-    
-    return cooksD
+    # Plot Cook's Distance
+    #cooksD.show()
+    # Get outlier percentage (% where Cooks Distance is greater than the influence threshold)
+    #cooksD.outlier_percentage_
+    return cooksD.distance_, cooksD.influence_threshold_
 
-
+"""
 ##### Cooks distance 
-cooksDist = getCooksDistance(wpData.TRAIN)
-cooksDist.show()
+wpCooksDists, wpCooksThreshold = getCooksDistance(wpData.TRAIN)
+cCDCooksDists, cCDCooksThreshold = getCooksDistance(cCDData.TRAIN)
+cICooksDists, cICooksThreshold = getCooksDistance(cIData.TRAIN)
+
+# "In fact, a general rule of thumb is that D(i) > 4/n is a good threshold for determining highly
+# influential points as outliers and this visualizer can report the percentage of data that is 
+# above that threshold" - https://www.scikit-yb.org/en/latest/api/regressor/influence.html
+df = pd.DataFrame(wpCooksDists, columns = ['distances'])
+df2 = df[df['distances'] > wpCooksThreshold]
+df2.sort_values(by = 'distances', ascending = False, inplace = True)
+"""
+
+def swapPercInfluenentialPoints(train, test, influentialTrain, influentialSwapPerc): 
+    if( influentialSwapPerc > 100 or influentialSwapPerc < 0):
+        print("Error: You cant have a swap percentage in excess of 100 or below 0. Please try again")
+        return 0
+    
+    # get number of obs to change from the training set to the test
+    numObs = len(influentialTrain) 
+    numToChange = round(numObs * influentialSwapPerc/100)
+    # randomly select the number of rows from the dataframe (without replacement)
+    toChangeDists = influentialTrain.sample(n = numToChange) # add replace = True for replacement sampling 
+    
+    ### Remove the observations to change from the training set
+    toChangeIndexes = toChangeDists.index # get index of observations to change #******** might need to add [0]
+    # get observations with these indexes from the training set
+    influentialPoints = train.iloc[toChangeIndexes]
+    # and remove observations with these indexes from the training set
+    newTrain = train.copy() # create copy so original is not overwitten 
+    newTrain.drop(toChangeIndexes, inplace = True)
+    
+    ### Now add the toChange df to the test set 
+    newTest = pd.concat([test, influentialPoints], axis = 0) #This will result in 
+    
+    return newTrain, newTest  
+
+def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePerc, nTrees):
+    if( noisePerc > 100 or noisePerc < 0):
+        print("Error: You cant have a noise percentage in excess of 100 or below 0. Please try again")
+        return 0
+   
+    testAccuracy = []
+    valAccuracy = []
+    influentialSwapPercLevels = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # Could make this an arg
+    train = dataRef.TRAIN 
+    xTest = dataRef.XTEST
+    yTest = dataRef.YTEST
+    test =  pd.concat([xTest, yTest],  axis = 1)
+    
+    # Get influential points using cooks distance 
+    cooksDists, cooksThreshold = getCooksDistance(dataRef.TRAIN)
+    # Get the influential points df
+    cooksDists = pd.DataFrame(cooksDists, columns = ['distances'])
+    influentialTrainDf = cooksDists[cooksDists['distances'] > cooksThreshold]
+    influentialTrainDf.sort_values(by = 'distances', ascending = False, inplace = True)
+    
+    for swapPerc in influentialSwapPercLevels:
+        
+        # Get average accuracy at this perc noise interval
+        testAccuaracyAtIncrement = []
+        valAccuaracyAtIncrement = []
+        
+        for i in range(10):
+            influentialPointsSwappedTrain, influentialPointsSwappedTest = swapPercInfluenentialPoints(train, test, influentialTrainDf, swapPerc)
+            
+            noiseTrain = insertingNoise(influentialPointsSwappedTrain, noisePerc)
+            noiseXTest, noiseYTest = insertingNoiseTestSet(dataRef.XTEST, dataRef.YTEST, noisePerc)
+            obj = mlAlgoScriptRef.Model(dataRef.TARGET_VAR_NAME, noiseTrain, noiseXTest, noiseYTest, dataRef.XVALID, dataRef.YVALID)
+            obj.createModel(nTrees) # train the model (If an argument is passed to a function that takes no arguments, the argument will be ignored)
+            # Get and append model test and validation accuracy
+            modelTestAccuracy = obj.modelAccuracy() 
+            testAccuaracyAtIncrement.append(modelTestAccuracy)
+            modelValAccuaracy = obj.validAccuracy()
+            valAccuaracyAtIncrement.append(modelValAccuaracy)
+            
+            
+        testAccuracy.append(statistics.mean(testAccuaracyAtIncrement))
+        valAccuracy.append(statistics.mean(valAccuaracyAtIncrement))
+       
+    
+    return testAccuracy, valAccuracy, influentialSwapPercLevels
 
 
-
+wpMitigationTestAccuracy, wpMitigationValAccuracy, influentialSwapPercLevels = influentialPointEffect(dt, wpData, 20, 50)
+ 
+########## Create helper function where you get call the above function for every increment of influential points to swap
 
 
 
 ############################ Test if the number of trees provides insulation against noise ######################
-def createTreesNoiseInsulationPlot(rfTest20T, rfVal20T, rfTest60T, rfVal60T, rfTest100T, rfVal100T,
-                                   rfTest200T, rfVal200T, rfTest500T, rfVal500T, noiseLevelPerc):
-    plt.plot(noiseLevelPerc, rfTest20T, color = 'pink', ls = '--', label = "20 Trees Test")
-    plt.plot(noiseLevelPerc, rfVal20T, color = 'pink', ls = ':', label = "20 Trees Val")
-    plt.plot(noiseLevelPerc, rfTest60T, color = 'coral', ls = '--', label = "60 Trees Test")
-    plt.plot(noiseLevelPerc, rfVal60T, color = 'coral', ls = ':', label = "60 Trees Val")
-    plt.plot(noiseLevelPerc, rfTest100T, color = 'orangered', ls = '--', label = "100 Trees Test")
-    plt.plot(noiseLevelPerc, rfVal100T, color = 'orangered', ls = ':', label = "100 Trees Val")
-    plt.plot(noiseLevelPerc, rfTest200T, color = 'indianred', ls = '--', label = "200 Trees Test")
-    plt.plot(noiseLevelPerc, rfVal200T, color = 'indianred', ls = ':', label = "200 Trees Val")
-    plt.plot(noiseLevelPerc, rfTest500T, color = 'maroon', ls = '--', label = "500 Trees Test")
-    plt.plot(noiseLevelPerc, rfVal500T, color = 'maroon', ls = ':', label = "500 Trees Val")
+def createTreesNoiseInsulationPlot(test20T, val20T, test60T, val60T, test100T, val100T,
+                                   test200T, val200T, test500T, val500T,
+                                   noiseLevelPerc, mlAlgoName):
+    plt.plot(noiseLevelPerc, test20T, color = 'pink', ls = '-', label = "20 Trees Test")
+    plt.plot(noiseLevelPerc, val20T, color = 'pink', ls = ':', label = "20 Trees Val")
+    plt.plot(noiseLevelPerc, test60T, color = 'coral', ls = '-', label = "60 Trees Test")
+    plt.plot(noiseLevelPerc, val60T, color = 'coral', ls = ':', label = "60 Trees Val")
+    plt.plot(noiseLevelPerc, test100T, color = 'orangered', ls = '-', label = "100 Trees Test")
+    plt.plot(noiseLevelPerc, val100T, color = 'orangered', ls = ':', label = "100 Trees Val")
+    plt.plot(noiseLevelPerc, test200T, color = 'indianred', ls = '-', label = "200 Trees Test")
+    plt.plot(noiseLevelPerc, val200T, color = 'indianred', ls = ':', label = "200 Trees Val")
+    plt.plot(noiseLevelPerc, test500T, color = 'maroon', ls = '-', label = "500 Trees Test")
+    plt.plot(noiseLevelPerc, val500T, color = 'maroon', ls = ':', label = "500 Trees Val")
     
     plt.legend()
     plt.xlabel("Noise %")
     plt.ylabel("Average Accuracy %")
-    plt.suptitle("Insualtion against Noise Effect on Random Forest Accuracy Provided by Number of Trees", fontsize=18)
+    plt.suptitle("Insualtion against Noise Effect on {} Accuracy Provided by Number of Trees".format(mlAlgoName), fontsize=18)
     plt.title("Note: Noise randomly inserted to binary target variable in training and test sets", fontsize=12)
 
 
@@ -753,16 +835,36 @@ wpRfTest200T, wpRfVal200T, wpRfNoiseLevelPerc200T = rfNoiseEffect(wpData, 0, 50,
 ## 500 trees
 wpRfTest500T, wpRfVal500T, wpRfNoiseLevelPerc500T = rfNoiseEffect(wpData, 0, 50, 51, nTrees = 500)
 
+## Generate plot
+createTreesNoiseInsulationPlot(wpRfTest20T, wpRfVal20T, wpRfTest60T, wpRfVal60T, wpRfTest100T, wpRfVal100T,
+                               wpRfTest200T, wpRfVal200T, wpRfTest500T, wpRfVal500T, 
+                               wpRfNoiseLevelPerc20T, "Random Forest")
+
+
+######## XGBoost
+## 20 trees
+wpXgbTest20T, wpXgbVal20T, wpXgbNoiseLevelPerc20T = xgbNoiseEffect(wpData, 0, 50, 51, nTrees = 20)
+## 60 trees
+wpXgbTest60T, wpXgbVal60T, wpXgbNoiseLevelPerc60T = xgbNoiseEffect(wpData, 0, 50, 51, nTrees = 60)
+## 100 trees
+# This is the deafult which has already been run. Results stored in vars: wpXgbTestAccuracy, wpXgbValAccuracy, wpXgbNoiseLevelPerc
+wpXgbTest100T, wpXgbVal100T = wpXgbTestAccuracy, wpXgbValAccuracy
+## 200 trees
+wpXgbTest200T, wpXgbVal200T, wpXgbNoiseLevelPerc200T = xgbNoiseEffect(wpData, 0, 50, 51, nTrees = 200)
+## 500 trees
+wpXgbTest500T, wpXgbVal500T, wpXgbNoiseLevelPerc500T = xgbNoiseEffect(wpData, 0, 50, 51, nTrees = 500)
+
+
 
 ##### Generate plot
-createTreesNoiseInsulationPlot(wpRfTest20T, wpRfVal20T, wpRfTest60T, wpRfVal60T, wpRfTest100T, wpRfVal100T,
-                               wpRfTest200T, wpRfVal200T, wpRfTest500T, wpRfVal500T, wpRfNoiseLevelPerc20T)
+createTreesNoiseInsulationPlot(wpXgbTest20T, wpXgbVal20T, wpXgbTest60T, wpXgbVal60T, wpXgbTest100T, wpXgbVal100T,
+                               wpXgbTest200T, wpXgbVal200T, wpXgbTest500T, wpXgbVal500T, 
+                               wpXgbNoiseLevelPerc20T, "Xgboost")
 
 
 
 
 
-
-
-
-
+a = [5,6,7,8,9]
+df = pd.DataFrame(a)
+c = df.iloc[[1,2,3]]

@@ -61,14 +61,16 @@ class Model():
             sys.exit() ## This will terminate the script execution
     
     
-    def createModel(self):
+    def createModel(self, nTrees):
         """
         Function for creating decision tree models. The created model will be saved to this instance of this object and 
         nothing will be returned. 
 
         Parameters
         ----------
-        None.
+        nTrees: int
+          This is not used in this class, but it is ncessary to have it as the createModel in the random forest class requires
+          nTrees to be provided
 
         Returns
         -------
