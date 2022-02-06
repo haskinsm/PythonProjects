@@ -308,7 +308,7 @@ def xgbNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nT
 
     """
     xgbScriptRef = scripts_and_data.scripts.xgboost_script
-    return noiseEffect(xgbScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements)
+    return noiseEffect(xgbScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nTrees)
 
 def dtNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
     """
@@ -532,7 +532,7 @@ def createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAc
     plt.title("Note: Noise randomly inserted to binary target variable in training and test sets", fontsize=12)
   
   
-"""
+
 ########### Get accuracy of specifc datasets and algorithms for specific noise levels ########
 ####### WaterPump dataset 
 ## rf     
@@ -643,7 +643,7 @@ createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAccura
       
 
 
-
+"""
 ################## Saving results ###########
 ##### Due to long running time 
 # Store Results in Dict  
@@ -659,9 +659,9 @@ df = pd.DataFrame(dataList)
 csvFilePath = os.path.join(CORRECTDIR, "\\accuracy_results.csv")
 # Save results as a csv file
 df.to_csv(csvFilePath, header = True)
-
-
 """
+
+
 
 ###################################################################################################################################
 ################################ Trialing potential Methods of Mitigating Noise ###################################################
@@ -723,10 +723,13 @@ df2 = df[df['distances'] > wpCooksThreshold]
 df2.sort_values(by = 'distances', ascending = False, inplace = True)
 """
 
-def swapPercInfluenentialPoints(train, test, influentialTrain, influentialSwapPerc): 
+def swapPercInfluenentialPoints(train, xTest, yTest, influentialTrain, influentialSwapPerc): 
     if( influentialSwapPerc > 100 or influentialSwapPerc < 0):
         print("Error: You cant have a swap percentage in excess of 100 or below 0. Please try again")
         return 0
+    
+    # Concat the xTest and yTest together
+    test = pd.concat([xTest, yTest], axis = 1)
     
     # get number of obs to change from the training set to the test
     numObs = len(influentialTrain) 
@@ -744,59 +747,81 @@ def swapPercInfluenentialPoints(train, test, influentialTrain, influentialSwapPe
     
     ### Now add the toChange df to the test set 
     newTest = pd.concat([test, influentialPoints], axis = 0) #This will result in 
+    ### Split back into xTest and yTest
+    newXTest, newYTest = newTest.iloc[:, :-1], newTest.iloc[:, -1]
     
-    return newTrain, newTest  
+    return newTrain, newXTest, newYTest  
 
 def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePerc, nTrees):
     if( noisePerc > 100 or noisePerc < 0):
         print("Error: You cant have a noise percentage in excess of 100 or below 0. Please try again")
         return 0
    
-    testAccuracy = []
-    valAccuracy = []
-    influentialSwapPercLevels = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # Could make this an arg
-    train = dataRef.TRAIN 
-    xTest = dataRef.XTEST
-    yTest = dataRef.YTEST
-    test =  pd.concat([xTest, yTest],  axis = 1)
+    # For simplicity I will not allow the user to specify the below swap percentages 
+    influentialSwapPercLevels = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     
-    # Get influential points using cooks distance 
-    cooksDists, cooksThreshold = getCooksDistance(dataRef.TRAIN)
-    # Get the influential points df
-    cooksDists = pd.DataFrame(cooksDists, columns = ['distances'])
-    influentialTrainDf = cooksDists[cooksDists['distances'] > cooksThreshold]
-    influentialTrainDf.sort_values(by = 'distances', ascending = False, inplace = True)
+    # Create copy of training set so original is not overwitten 
+    train = dataRef.TRAIN
+    xTest = dataRef.XTEST 
+    yTest = dataRef.YTEST
+   
+    # Create dict to store results 
+    results = {}
     
     for swapPerc in influentialSwapPercLevels:
-        
-        # Get average accuracy at this perc noise interval
-        testAccuaracyAtIncrement = []
-        valAccuaracyAtIncrement = []
-        
-        for i in range(10):
-            influentialPointsSwappedTrain, influentialPointsSwappedTest = swapPercInfluenentialPoints(train, test, influentialTrainDf, swapPerc)
-            
-            noiseTrain = insertingNoise(influentialPointsSwappedTrain, noisePerc)
-            noiseXTest, noiseYTest = insertingNoiseTestSet(dataRef.XTEST, dataRef.YTEST, noisePerc)
-            obj = mlAlgoScriptRef.Model(dataRef.TARGET_VAR_NAME, noiseTrain, noiseXTest, noiseYTest, dataRef.XVALID, dataRef.YVALID)
-            obj.createModel(nTrees) # train the model (If an argument is passed to a function that takes no arguments, the argument will be ignored)
-            # Get and append model test and validation accuracy
-            modelTestAccuracy = obj.modelAccuracy() 
-            testAccuaracyAtIncrement.append(modelTestAccuracy)
-            modelValAccuaracy = obj.validAccuracy()
-            valAccuaracyAtIncrement.append(modelValAccuaracy)
-            
-            
-        testAccuracy.append(statistics.mean(testAccuaracyAtIncrement))
-        valAccuracy.append(statistics.mean(valAccuaracyAtIncrement))
-       
+         # Create lists to store the results
+        testAccuracy = []
+        valAccuracy = []
+        for noisePerc in range(0, 51, 1):
+            # Repeat 10 times and get the average accuracy 
+            testAccuaracyAtIncrement = []
+            valAccuaracyAtIncrement = []
+            for i in range(10):
+                # Insert % noise into the test and training sets
+                train = insertingNoise(train, noisePerc)
+                xTest, yTest = insertingNoiseTestSet(xTest, yTest, noisePerc)
+                
+                ### Swapping the top % of most influential points from the training to test set
+                # Get influential points in the training set using cooks distance 
+                cooksDists, cooksThreshold = getCooksDistance(train)
+                # Get the influential points df
+                cooksDists = pd.DataFrame(cooksDists, columns = ['distances'])
+                influentialTrainDf = cooksDists[cooksDists['distances'] > cooksThreshold]
+                influentialTrainDf.sort_values(by = 'distances', ascending = False, inplace = True)
+                # Now get the new training and test setafter the influential points have been swapped 
+                swappedTrain, swappedXTest, swappedYTest = swapPercInfluenentialPoints(train, xTest, yTest, 
+                                                                           influentialTrainDf, swapPerc)
     
-    return testAccuracy, valAccuracy, influentialSwapPercLevels
+                ### Now create an object of the relevant machine learning algorithm class 
+                obj = mlAlgoScriptRef.Model(dataRef.TARGET_VAR_NAME, swappedTrain, swappedXTest, swappedYTest,
+                                            dataRef.XVALID, dataRef.YVALID)
+                obj.createModel(nTrees) # train the model (If an argument is passed to a function that takes no arguments, the argument will be ignored)
+                # Get and append model test and validation accuracy
+                modelTestAccuracy = obj.modelAccuracy() 
+                testAccuaracyAtIncrement.append(modelTestAccuracy)
+                modelValAccuaracy = obj.validAccuracy()
+                valAccuaracyAtIncrement.append(modelValAccuaracy)
+            
+            # Get the average accuracy and add it to the test and val accuracy lists
+            testAccuracy.append(statistics.mean(testAccuaracyAtIncrement))
+            valAccuracy.append(statistics.mean(valAccuaracyAtIncrement))
+        
+        ## Add the accuracys to results 
+        results['{}% most IP Swap Test'.format(noisePerc)] = testAccuracy
+        results['{}% most IP Swap Val'.format(noisePerc)] = valAccuracy
+    
+    # Create the noiseLevelPerc list for graphing purposes.
+    noisePercLevels = list(range(0, 51, 1))
+    
+    return results, noisePercLevels
 
-
-wpMitigationTestAccuracy, wpMitigationValAccuracy, influentialSwapPercLevels = influentialPointEffect(dt, wpData, 20, 50)
+########
+wpRfNoiseMitigationResults, noisePercLevels = influentialPointEffect(rf, wpData, 20, 50)
  
-########## Create helper function where you get call the above function for every increment of influential points to swap
+
+
+
+
 
 
 
@@ -824,16 +849,16 @@ def createTreesNoiseInsulationPlot(test20T, val20T, test60T, val60T, test100T, v
 
 ######## Random Forest
 ## 20 trees
-wpRfTest20T, wpRfVal20T, wpRfNoiseLevelPerc20T = rfNoiseEffect(wpData, 0, 50, 51, nTrees = 20)
+wpRfTest20T, wpRfVal20T, wpRfNoiseLevelPerc20T = rfNoiseEffect(wpData, 0, 50, 51, 20)
 ## 60 trees
-wpRfTest60T, wpRfVal60T, wpRfNoiseLevelPerc60T = rfNoiseEffect(wpData, 0, 50, 51, nTrees = 60)
+wpRfTest60T, wpRfVal60T, wpRfNoiseLevelPerc60T = rfNoiseEffect(wpData, 0, 50, 51, 60)
 ## 100 trees
 # This is the deafult which has already been run. Results stored in vars: wpRfTestAccuracy, wpRfValAccuracy, wpRfNoiseLevelPerc
 wpRfTest100T, wpRfVal100T = wpRfTestAccuracy, wpRfValAccuracy
 ## 200 trees
-wpRfTest200T, wpRfVal200T, wpRfNoiseLevelPerc200T = rfNoiseEffect(wpData, 0, 50, 51, nTrees = 200)
+wpRfTest200T, wpRfVal200T, wpRfNoiseLevelPerc200T = rfNoiseEffect(wpData, 0, 50, 51, 200)
 ## 500 trees
-wpRfTest500T, wpRfVal500T, wpRfNoiseLevelPerc500T = rfNoiseEffect(wpData, 0, 50, 51, nTrees = 500)
+wpRfTest500T, wpRfVal500T, wpRfNoiseLevelPerc500T = rfNoiseEffect(wpData, 0, 50, 51, 500)
 
 ## Generate plot
 createTreesNoiseInsulationPlot(wpRfTest20T, wpRfVal20T, wpRfTest60T, wpRfVal60T, wpRfTest100T, wpRfVal100T,
@@ -843,16 +868,16 @@ createTreesNoiseInsulationPlot(wpRfTest20T, wpRfVal20T, wpRfTest60T, wpRfVal60T,
 
 ######## XGBoost
 ## 20 trees
-wpXgbTest20T, wpXgbVal20T, wpXgbNoiseLevelPerc20T = xgbNoiseEffect(wpData, 0, 50, 51, nTrees = 20)
+wpXgbTest20T, wpXgbVal20T, wpXgbNoiseLevelPerc20T = xgbNoiseEffect(wpData, 0, 50, 51, 20)
 ## 60 trees
-wpXgbTest60T, wpXgbVal60T, wpXgbNoiseLevelPerc60T = xgbNoiseEffect(wpData, 0, 50, 51, nTrees = 60)
+wpXgbTest60T, wpXgbVal60T, wpXgbNoiseLevelPerc60T = xgbNoiseEffect(wpData, 0, 50, 51, 60)
 ## 100 trees
 # This is the deafult which has already been run. Results stored in vars: wpXgbTestAccuracy, wpXgbValAccuracy, wpXgbNoiseLevelPerc
 wpXgbTest100T, wpXgbVal100T = wpXgbTestAccuracy, wpXgbValAccuracy
 ## 200 trees
-wpXgbTest200T, wpXgbVal200T, wpXgbNoiseLevelPerc200T = xgbNoiseEffect(wpData, 0, 50, 51, nTrees = 200)
+wpXgbTest200T, wpXgbVal200T, wpXgbNoiseLevelPerc200T = xgbNoiseEffect(wpData, 0, 50, 51, 200)
 ## 500 trees
-wpXgbTest500T, wpXgbVal500T, wpXgbNoiseLevelPerc500T = xgbNoiseEffect(wpData, 0, 50, 51, nTrees = 500)
+wpXgbTest500T, wpXgbVal500T, wpXgbNoiseLevelPerc500T = xgbNoiseEffect(wpData, 0, 50, 51, 500)
 
 
 
@@ -863,8 +888,13 @@ createTreesNoiseInsulationPlot(wpXgbTest20T, wpXgbVal20T, wpXgbTest60T, wpXgbVal
 
 
 
-
+############################################# Problems with nTrees argument 
 
 a = [5,6,7,8,9]
 df = pd.DataFrame(a)
 c = df.iloc[[1,2,3]]
+
+def tester(a,b,c):
+    return a, b
+
+d, e = tester(a,c,df)
