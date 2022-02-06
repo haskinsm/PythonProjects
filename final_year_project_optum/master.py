@@ -169,14 +169,10 @@ def insertingNoiseTestSet(xTest, yTest, noisePerc):
     noiseYTest = noiseDf.iloc[:, -1]
     return noiseXTest, noiseYTest
 
-#noiseTrain = insertingNoise(wpData.TRAIN, 1)
-#noiseXTest, noiseYTest = insertingNoiseTestSet(wpData.XTEST, wpData.YTEST, 1)
-
-
 
 ## Now write functions to add noise over a specified range, and then plot the resulting change in accuracy 
 
-def noiseEffect(mlAlgoScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nTrees):
+def noiseEffect(mlAlgoScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nTrees = 100):
     """
     This function adds noise at increments over a specified range to a dataset and calculates the acccuracy of a Machine Learning algorithm when 
     applied to the dataset. 
@@ -206,7 +202,6 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoise
         DESCRIPTION. List of % noise increments that have been applied 
 
     """
-    
     
     if( noiseStartPerc > 100 or noiseStartPerc < 0 or noiseEndPerc > 100 or noiseEndPerc < 0):
         print("Error: You cant have a noise percentage in excess of 100 or below 0. Please try again")
@@ -752,13 +747,10 @@ def swapPercInfluenentialPoints(train, xTest, yTest, influentialTrain, influenti
     
     return newTrain, newXTest, newYTest  
 
-def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePerc, nTrees):
-    if( noisePerc > 100 or noisePerc < 0):
-        print("Error: You cant have a noise percentage in excess of 100 or below 0. Please try again")
-        return 0
+def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 100):
    
-    # For simplicity I will not allow the user to specify the below swap percentages 
-    influentialSwapPercLevels = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    # Create list of percentages of most influential points that will be swapped from the training to test set
+    influentialSwapPercLevels = [0, 20, 40, 60, 80, 100]
     
     # Create copy of training set so original is not overwitten 
     train = dataRef.TRAIN
@@ -769,10 +761,10 @@ def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePerc, nTrees):
     results = {}
     
     for swapPerc in influentialSwapPercLevels:
-         # Create lists to store the results
+        # Create lists to store the results
         testAccuracy = []
         valAccuracy = []
-        for noisePerc in range(0, 51, 1):
+        for noisePerc in noisePercLevels:
             # Repeat 10 times and get the average accuracy 
             testAccuaracyAtIncrement = []
             valAccuaracyAtIncrement = []
@@ -795,7 +787,8 @@ def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePerc, nTrees):
                 ### Now create an object of the relevant machine learning algorithm class 
                 obj = mlAlgoScriptRef.Model(dataRef.TARGET_VAR_NAME, swappedTrain, swappedXTest, swappedYTest,
                                             dataRef.XVALID, dataRef.YVALID)
-                obj.createModel(nTrees) # train the model (If an argument is passed to a function that takes no arguments, the argument will be ignored)
+                obj.createModel(nTrees) # train the model 
+                # (If an argument is passed to a function that takes no arguments, the argument will be ignored)
                 # Get and append model test and validation accuracy
                 modelTestAccuracy = obj.modelAccuracy() 
                 testAccuaracyAtIncrement.append(modelTestAccuracy)
@@ -807,20 +800,120 @@ def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePerc, nTrees):
             valAccuracy.append(statistics.mean(valAccuaracyAtIncrement))
         
         ## Add the accuracys to results 
-        results['{}% most IP Swap Test'.format(noisePerc)] = testAccuracy
-        results['{}% most IP Swap Val'.format(noisePerc)] = valAccuracy
+        results['{}%Test'.format(noisePerc)] = testAccuracy
+        results['{}%Val'.format(noisePerc)] = valAccuracy
     
-    # Create the noiseLevelPerc list for graphing purposes.
-    noisePercLevels = list(range(0, 51, 1))
+    return results
+
+
+def createCooksDistNoiseMitigationPlot(wpResults, cIResults, cCDResults, mlAlgorithmName, noiseLevelPerc):
+    plt.figure() # Instantiate a new figure 
     
-    return results, noisePercLevels
+    # Get mean accuracy for each 
+    mean0PercSwapTestAccuracy,  mean0PercSwapValAccuracy = [], []
+    mean20PercSwapTestAccuracy,  mean20PercSwapValAccuracy = [], []
+    mean40PercSwapTestAccuracy,  mean40PercSwapValAccuracy = [], []
+    mean60PercSwapTestAccuracy,  mean60PercSwapValAccuracy = [], []
+    mean80PercSwapTestAccuracy,  mean80PercSwapValAccuracy = [], []
+    mean100PercSwapTestAccuracy, mean100PercSwapValAccuracy = [], []
 
-########
-wpRfNoiseMitigationResults, noisePercLevels = influentialPointEffect(rf, wpData, 20, 50)
- 
+    
+    for i in range(len(wpRfTestAccuracy)):
+        mean0PercSwapTestAccuracy.append( wpResults['0%Test'][i] + cIResults['0%Test'][i] + cCDResults['0%Test'][i] /3)
+        mean0PercSwapValAccuracy.append( wpResults['0%Val'][i] + cIResults['0%Val'][i] + cCDResults['0%Val'][i] /3)
+       
+        mean20PercSwapTestAccuracy.append( wpResults['20%Test'][i] + cIResults['20%Test'][i] + cCDResults['20%Test'][i] /3)
+        mean20PercSwapValAccuracy.append( wpResults['20%Val'][i] + cIResults['20%Val'][i] + cCDResults['20%Val'][i] /3)
+       
+        mean40PercSwapTestAccuracy.append( wpResults['40%Test'][i] + cIResults['40%Test'][i] + cCDResults['40%Test'][i] /3)
+        mean40PercSwapValAccuracy.append( wpResults['40%Val'][i] + cIResults['40%Val'][i] + cCDResults['40%Val'][i] /3)
+        
+        mean60PercSwapTestAccuracy.append( wpResults['60%Test'][i] + cIResults['60%Test'][i] + cCDResults['60%Test'][i] /3)
+        mean60PercSwapValAccuracy.append( wpResults['60%Val'][i] + cIResults['60%Val'][i] + cCDResults['60%Val'][i] /3)
+       
+        mean80PercSwapTestAccuracy.append( wpResults['80%Test'][i] + cIResults['80%Test'][i] + cCDResults['80%Test'][i] /3)
+        mean80PercSwapValAccuracy.append( wpResults['80%Val'][i] + cIResults['80%Val'][i] + cCDResults['80%Val'][i] /3)
+       
+        mean100PercSwapTestAccuracy.append( wpResults['100%Test'][i] + cIResults['100%Test'][i] + cCDResults['100%Test'][i] /3)
+        mean100PercSwapValAccuracy.append( wpResults['100%Val'][i] + cIResults['100%Val'][i] + cCDResults['100%Val'][i] /3)
+       
+    
+    # 0%
+    plt.plot(noiseLevelPerc, mean0PercSwapTestAccuracy, color = 'pink', linestyle = 'dotted', label = "0% Test")
+    plt.plot(noiseLevelPerc, mean0PercSwapValAccuracy, color = 'pink', ls='-', label = "0% Validation")
+    # 20%
+    plt.plot(noiseLevelPerc, mean20PercSwapTestAccuracy, color = 'coral', linestyle = 'dotted', label = "20% Test")
+    plt.plot(noiseLevelPerc, mean20PercSwapValAccuracy, color = 'coral', ls='-', label = "20% Validation")
+    # 40% 
+    plt.plot(noiseLevelPerc, mean40PercSwapTestAccuracy, color = 'orangered', linestyle = 'dotted', label = "40% Test")
+    plt.plot(noiseLevelPerc, mean40PercSwapValAccuracy, color = 'orangered', ls='-', label = "40% Validation")
+    # 60%
+    plt.plot(noiseLevelPerc, mean60PercSwapTestAccuracy, color = 'indianred', linestyle = 'dotted', label = "60% Test")
+    plt.plot(noiseLevelPerc, mean60PercSwapValAccuracy, color = 'indianred', ls='-', label = "60% Validation")
+    # 80%
+    plt.plot(noiseLevelPerc, mean0PercSwapTestAccuracy, color = 'marroon', linestyle = 'dotted', label = "80% Test")
+    plt.plot(noiseLevelPerc, mean0PercSwapValAccuracy, color = 'marroon', ls='-', label = "80% Validation")
+    # 100%
+    plt.plot(noiseLevelPerc, mean0PercSwapTestAccuracy, color = 'black', linestyle = 'dotted', label = "100% Test")
+    plt.plot(noiseLevelPerc, mean0PercSwapValAccuracy, color = 'black', ls='-', label = "100% Validation")
+    
+    plt.legend()
+    plt.xlabel("Noise %")
+    plt.ylabel("Average Accuracy %")
+    plt.suptitle("Using Cooks Distance to Mitigate the Impact of Noise on {} Accuracy".format(mlAlgorithmName), fontsize=18)
+    plt.title("Note: -The top X percentage of the ordered most influential points in the training set were put into te test set"
+              + "\n-Noise randomly inserted to binary target variable in training and test sets", fontsize=12)
 
 
+################# Get the results of mitigation of noise effect using cooks distance  
+##### Constants
+## Create the noiseLevelPerc list for graphing purposes.
+NOISEPERCLEVELS = list(range(0, 51, 1)) # 0,1,2,....,50
 
+######## Water pump dataset 
+## rf
+wpRfNoiseMitigationResults = influentialPointEffect(rf, wpData, NOISEPERCLEVELS, 100) # Use default nTrees (=100)
+## xgb 
+wpXgbNoiseMitigationResults = influentialPointEffect(xgb, wpData, NOISEPERCLEVELS, 100) # Use default nTrees (=100)
+## svm
+wpSvmNoiseMitigationResults = influentialPointEffect(svm, wpData, NOISEPERCLEVELS)
+## dt 
+wpDtNoiseMitigationResults = influentialPointEffect(dt, wpData, NOISEPERCLEVELS)
+
+######## Census Income dataset 
+## rf
+cIRfNoiseMitigationResults = influentialPointEffect(rf, cIData, NOISEPERCLEVELS, 100) # Use default nTrees (=100)
+## xgb 
+cIXgbNoiseMitigationResults = influentialPointEffect(xgb, cIData, NOISEPERCLEVELS, 100) # Use default nTrees (=100)
+## svm
+cISvmNoiseMitigationResults = influentialPointEffect(svm, cIData, NOISEPERCLEVELS)
+## dt 
+cIDtNoiseMitigationResults = influentialPointEffect(dt, cIData, NOISEPERCLEVELS)
+
+######## Credit Card Default dataset 
+## rf
+cCDRfNoiseMitigationResults = influentialPointEffect(rf, cCDData, NOISEPERCLEVELS, 100) # Use default nTrees (=100)
+## xgb 
+cCDXgbNoiseMitigationResults = influentialPointEffect(xgb, cCDData, NOISEPERCLEVELS, 100) # Use default nTrees (=100)
+## svm
+cCDSvmNoiseMitigationResults = influentialPointEffect(svm, cCDData, NOISEPERCLEVELS)
+## dt 
+cCDDtNoiseMitigationResults = influentialPointEffect(dt, cCDData, NOISEPERCLEVELS)
+
+
+#### Generate general plot where the average accuracy across the 3 datasets for each noise % is calculated
+# rf
+createCooksDistNoiseMitigationPlot(wpRfNoiseMitigationResults, cIRfNoiseMitigationResults, 
+                                   cCDRfNoiseMitigationResults, "Random Forest", NOISEPERCLEVELS)
+# xgb
+createCooksDistNoiseMitigationPlot(wpXgbNoiseMitigationResults, cIXgbNoiseMitigationResults, 
+                                   cCDXgbNoiseMitigationResults, "XGBoost", NOISEPERCLEVELS)
+# svm
+createCooksDistNoiseMitigationPlot(wpSvmNoiseMitigationResults, cISvmNoiseMitigationResults, 
+                                   cCDSvmNoiseMitigationResults, "Support Vector Machine", NOISEPERCLEVELS)
+# dt
+createCooksDistNoiseMitigationPlot(wpDtNoiseMitigationResults, cIDtNoiseMitigationResults, 
+                                   cCDDtNoiseMitigationResults, "Decision Tree", NOISEPERCLEVELS)
 
 
 
@@ -879,8 +972,6 @@ wpXgbTest200T, wpXgbVal200T, wpXgbNoiseLevelPerc200T = xgbNoiseEffect(wpData, 0,
 ## 500 trees
 wpXgbTest500T, wpXgbVal500T, wpXgbNoiseLevelPerc500T = xgbNoiseEffect(wpData, 0, 50, 51, 500)
 
-
-
 ##### Generate plot
 createTreesNoiseInsulationPlot(wpXgbTest20T, wpXgbVal20T, wpXgbTest60T, wpXgbVal60T, wpXgbTest100T, wpXgbVal100T,
                                wpXgbTest200T, wpXgbVal200T, wpXgbTest500T, wpXgbVal500T, 
@@ -888,13 +979,4 @@ createTreesNoiseInsulationPlot(wpXgbTest20T, wpXgbVal20T, wpXgbTest60T, wpXgbVal
 
 
 
-############################################# Problems with nTrees argument 
 
-a = [5,6,7,8,9]
-df = pd.DataFrame(a)
-c = df.iloc[[1,2,3]]
-
-def tester(a,b,c):
-    return a, b
-
-d, e = tester(a,c,df)
