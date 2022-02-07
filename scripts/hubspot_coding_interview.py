@@ -25,6 +25,9 @@ output = [2,6], [9,-1]
 print(twoSum(input, sum))
 
 
+######################## Nathan I did the below bit in a sort of weird way, sort of forgot how to do 
+# binary search and needed a bit of help from the guy
+# Normal binary search looks a lil diff
 
 def twoSum2(arr, sum):
     arr.sort()
