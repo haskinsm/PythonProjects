@@ -92,7 +92,7 @@ class Model():
             'n_estimators': nTrees, # 500 trees
             #'warm_start': True, 
             #'max_depth': 8,  # depth of tree,(default = None)
-            'min_samples_leaf': 50, # Too small a number will result in overfitting 
+            'min_samples_leaf': 100, # Too small a number will result in overfitting 
             'max_features' : 'sqrt', # Better than setting it as 0.2 due to size of datasets
             'verbose': 0 #suppresses all text while a value of 3 outputs the tree learning process at every iteration
         }
