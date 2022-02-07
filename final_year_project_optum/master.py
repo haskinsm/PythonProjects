@@ -23,18 +23,18 @@ Functions:
     createMlAlgorithmNoiseEffectPlot()
     createMultipleNoiseEffectPlot()
 """
+############# External Imports
 import os
 import pandas as pd 
-#from sklearn.linear_model import LinearRegression
-#from yellowbrick.regressor import CooksDistance
 import matplotlib.pyplot as plt
 from yellowbrick.regressor import cooks_distance
 import statistics
 
+############ Internal Imports (i.e. Self written)
 # Change directory to correctDir or script won't run correctly
 CORRECTDIR = "C:\\Users\\micha\\Documents\\3rd year\\Software Applications\\PythonSpyder(Anaconda V)\\final_year_project_optum"
 os.chdir(CORRECTDIR)
-##### Import scripts I've written. Do this after changed to correct directory ###########################
+##### Import scripts I've written. Do this after changed to correct directory 
 import scripts_and_data
 
 
@@ -172,7 +172,7 @@ def insertingNoiseTestSet(xTest, yTest, noisePerc):
 
 ## Now write functions to add noise over a specified range, and then plot the resulting change in accuracy 
 
-def noiseEffect(mlAlgoScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nTrees = 100):
+def noiseEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 100):
     """
     This function adds noise at increments over a specified range to a dataset and calculates the acccuracy of a Machine Learning algorithm when 
     applied to the dataset. 
@@ -185,12 +185,8 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoise
         DESCRIPTION.
     dataRef : Class Reference 
         DESCRIPTION.  Reference to the class of a dataset E.g.: scripts_and_data.data.water_pump_dataset.WaterPump # reference of class WaterPump
-    noiseStartPerc : float
-        DESCRIPTION. % to start incrementing noise from 
-    noiseEndPerc : float
-        DESCRIPTION. % to stop incrementing noise at 
-    numNoiseIncrements : int
-        DESCRIPTION. Number of noise increments over the range of noiseStartPerc and noieEndPerc
+    noisePercLevels : [float]
+        DESCRIPTION. List of the percentages of noise that will be inserted into the test and training sets.
 
     Returns
     -------
@@ -202,34 +198,21 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoise
         DESCRIPTION. List of % noise increments that have been applied 
 
     """
-    
-    if( noiseStartPerc > 100 or noiseStartPerc < 0 or noiseEndPerc > 100 or noiseEndPerc < 0):
-        print("Error: You cant have a noise percentage in excess of 100 or below 0. Please try again")
-        return 0
-    elif(noiseStartPerc > noiseEndPerc):
-        print("Error: You cant have a noise end percentage less than the noise start percentage. Please try again")
-        return 0
-    elif(isinstance(numNoiseIncrements, int) == False):
-        print("Error: please enter an integer noiseIncrements value")
-        return 0
    
     testAccuracy = []
     valAccuracy = []
-    noiseLevelPerc = []
     train = dataRef.TRAIN 
     xTest = dataRef.XTEST
     yTest = dataRef.YTEST
-    #rf = scripts_and_data.scripts.random_forest # reference to random_forest script
     
-    noiseIncrements = round((noiseEndPerc - noiseStartPerc)/numNoiseIncrements)
-    for x in range(noiseStartPerc, noiseEndPerc + 1, noiseIncrements):
+    for noisePerc in noisePercLevels:
         
         # Get average accuracy at this perc noise interval
         testAccuaracyAtIncrement = []
         valAccuaracyAtIncrement = []
         for i in range(10):
-            train = insertingNoise(dataRef.TRAIN, x)
-            xTest, yTest = insertingNoiseTestSet(dataRef.XTEST, dataRef.YTEST, x)
+            train = insertingNoise(dataRef.TRAIN, noisePerc)
+            xTest, yTest = insertingNoiseTestSet(dataRef.XTEST, dataRef.YTEST, noisePerc)
             obj = mlAlgoScriptRef.Model(dataRef.TARGET_VAR_NAME, train, xTest, yTest, dataRef.XVALID, dataRef.YVALID)
             obj.createModel(nTrees) # train the model (If an argument is passed to a function that takes no arguments, the argument will be ignored)
             # Get and append model test and validation accuracy
@@ -243,11 +226,10 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoise
             
         testAccuracy.append(statistics.mean(testAccuaracyAtIncrement))
         valAccuracy.append(statistics.mean(valAccuaracyAtIncrement))
-        noiseLevelPerc.append(x) # Append noise level perc
     
-    return testAccuracy, valAccuracy, noiseLevelPerc
+    return testAccuracy, valAccuracy
         
-def rfNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nTrees = 100):
+def rfNoiseEffect(dataRef, noisePercLevels, nTrees = 100):
     """
     Helper Function for general noise Effect function. This will call the noiseEffect function 
     will add noise to data used to train random forest models
@@ -256,13 +238,9 @@ def rfNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nTr
     ----------
     dataRef : Class Reference
         DESCRIPTION. Refernece to the class of a dataset E.g.: scripts_and_data.data.water_pump_dataset.WaterPump # reference of class WaterPump
-    noiseStartPerc : Float 
-        DESCRIPTION. % to start incrementing noise from 
-    noiseEndPerc : Float 
-        DESCRIPTION. % to stop incrementing noise at 
-    numNoiseIncrements : Int
-        DESCRIPTION. Number of noise increments over the range of noiseStartPerc and noieEndPerc
-
+    noisePercLevels : [float]
+        DESCRIPTION. List of the percentages of noise that will be inserted into the test and training sets.
+        
     Returns
     -------
     [] 
@@ -274,9 +252,9 @@ def rfNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nTr
 
     """
     rfScriptRef = scripts_and_data.scripts.random_forest
-    return noiseEffect(rfScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nTrees)
+    return noiseEffect(rfScriptRef, dataRef, noisePercLevels, nTrees)
 
-def xgbNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nTrees = 100):
+def xgbNoiseEffect(dataRef, noisePercLevels, nTrees = 100):
     """
     Helper Function for general noise Effect function. This will call the noiseEffect function 
     will add noise to data used to train xgboost models
@@ -285,12 +263,8 @@ def xgbNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nT
     ----------
     dataRef : Class Reference
         DESCRIPTION. Refernece to the class of a dataset E.g.: scripts_and_data.data.water_pump_dataset.WaterPump # reference of class WaterPump
-    noiseStartPerc : Float 
-        DESCRIPTION. % to start incrementing noise from 
-    noiseEndPerc : Float 
-        DESCRIPTION. % to stop incrementing noise at 
-    numNoiseIncrements : Int
-        DESCRIPTION. Number of noise increments over the range of noiseStartPerc and noieEndPerc
+    noisePercLevels : [float]
+        DESCRIPTION. List of the percentages of noise that will be inserted into the test and training sets.
 
     Returns
     -------
@@ -303,9 +277,9 @@ def xgbNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nT
 
     """
     xgbScriptRef = scripts_and_data.scripts.xgboost_script
-    return noiseEffect(xgbScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements, nTrees)
+    return noiseEffect(xgbScriptRef, dataRef, noisePercLevels, nTrees)
 
-def dtNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
+def dtNoiseEffect(dataRef, noisePercLevels):
     """
     Helper Function for general noise Effect function. This will call the noiseEffect function 
     will add noise to data used to train decision tree models
@@ -314,12 +288,8 @@ def dtNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
     ----------
     dataRef : Class Reference
         DESCRIPTION. Refernece to the class of a dataset E.g.: scripts_and_data.data.water_pump_dataset.WaterPump # reference of class WaterPump
-    noiseStartPerc : Float 
-        DESCRIPTION. % to start incrementing noise from 
-    noiseEndPerc : Float 
-        DESCRIPTION. % to stop incrementing noise at 
-    numNoiseIncrements : Int
-        DESCRIPTION. Number of noise increments over the range of noiseStartPerc and noieEndPerc
+    noisePercLevels : [float]
+        DESCRIPTION. List of the percentages of noise that will be inserted into the test and training sets.
 
     Returns
     -------
@@ -332,9 +302,9 @@ def dtNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
 
     """
     dtScriptRef = scripts_and_data.scripts.decision_tree
-    return noiseEffect(dtScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements)
+    return noiseEffect(dtScriptRef, dataRef, noisePercLevels)
 
-def svmNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
+def svmNoiseEffect(dataRef, noisePercLevels):
     """
     Helper Function for general noise Effect function. This will call the noiseEffect function 
     will add noise to data used to train support vector machine models
@@ -343,12 +313,8 @@ def svmNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
     ----------
     dataRef : Class Reference
         DESCRIPTION. Refernece to the class of a dataset E.g.: scripts_and_data.data.water_pump_dataset.WaterPump # reference of class WaterPump
-    noiseStartPerc : Float 
-        DESCRIPTION. % to start incrementing noise from 
-    noiseEndPerc : Float 
-        DESCRIPTION. % to stop incrementing noise at 
-    numNoiseIncrements : Int
-        DESCRIPTION. Number of noise increments over the range of noiseStartPerc and noieEndPerc
+    noisePercLevels : [float]
+        DESCRIPTION. List of the percentages of noise that will be inserted into the test and training sets.
 
     Returns
     -------
@@ -361,9 +327,9 @@ def svmNoiseEffect(dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements):
 
     """
     dtScriptRef = scripts_and_data.scripts.support_vector_machine
-    return noiseEffect(dtScriptRef, dataRef, noiseStartPerc, noiseEndPerc, numNoiseIncrements)
+    return noiseEffect(dtScriptRef, dataRef, noisePercLevels)
 
-def createSingleNoiseEffectPlot(testAccuracy, valAccuracy, noiseLevelPerc, datasetName, algorithmName):
+def createSingleNoiseEffectPlot(testAccuracy, valAccuracy, noisePercLevels, datasetName, algorithmName):
     """
     This is a simple plotting fucntion which plots the test and validation accuracy of a specific ML algorithm
     appied to a specific dataset
@@ -377,8 +343,9 @@ def createSingleNoiseEffectPlot(testAccuracy, valAccuracy, noiseLevelPerc, datas
         DESCRIPTION.
     valAccuracy : [float]
         DESCRIPTION.
-    noiseLevelPerc : [int]
-        DESCRIPTION.
+    noisePercLevels : [float]
+        DESCRIPTION. List of the percentages of noise that have been inserted into the test and training sets.
+        This should correspond to the test and val accuracy ranges of noise. 
     datasetName : String
         DESCRIPTION.
     algorithmName : String
@@ -390,8 +357,8 @@ def createSingleNoiseEffectPlot(testAccuracy, valAccuracy, noiseLevelPerc, datas
 
     """
     plt.figure() # Instantiate a new figure 
-    plt.plot(noiseLevelPerc, testAccuracy,'r--', label = "Test")
-    plt.plot(noiseLevelPerc, valAccuracy, 'g--', label = "Validation")
+    plt.plot(noisePercLevels, testAccuracy,'r--', label = "Test")
+    plt.plot(noisePercLevels, valAccuracy, 'g--', label = "Validation")
     plt.legend()
     plt.xlabel("Noise %")
     plt.ylabel("Average Accuracy %")
@@ -402,26 +369,32 @@ def createSingleNoiseEffectPlot(testAccuracy, valAccuracy, noiseLevelPerc, datas
 def createMlAlgorithmNoiseEffectPlot(wpTestAccuracy, wpValAccuracy, 
                                      cITestAccuracy, cIValAccuracy,
                                      cCDTestAccuracy, cCDValAccuracy, 
-                                     noiseLevelPerc, mlAlgorithmName):
+                                     noisePercLevels, mlAlgorithmName):
     """
     Function to generate a plot depicting how the accuracy of machine learning alrgorithm Random forests is
     affected by adding noise to the target variable in the test and training sets for multiple datasets.  
 
     Parameters
     ----------
-    wpTestAccuracy : []
+    wpTestAccuracy : [float]
         DESCRIPTION. List of Test accuracys for waterpump dataset
-    wpValAccuracy : []
+    wpValAccuracy : [float]
         DESCRIPTION. List of Validation accuracys for waterpump dataset
-    ciTestAccuracy : []
+    ciTestAccuracy : [float]
         DESCRIPTION. List of Test accuracys for Census Income dataset
-    ciValAccuracy : []
+    ciValAccuracy : [float]
         DESCRIPTION. List of Validation accuracys for Census Income dataset
-    noiseLevelPerc : []
+    cCDTestAccuracy : [float]
+        DESCRIPTION. List of Test accuracys for Credit Card Default dataset
+    cCDValAccuracy : [float]
+        DESCRIPTION. List of Validation accuracys for Credit Card Default dataset
+    noisePercLevels : []
         DESCRIPTION. **Assumes that the noise increments is the same for all datasets**. List of noise levels which
                      should correspond to the test and validation accuracys 
     mlAlgorithmName : String
-        DESCRIPTION. E.g. "Random Forest" or "XGBoost" or "Decsion Tree"
+        DESCRIPTION. E.g. "Random Forest" or "XGBoost" or "Decsion Tree" or "Support Vector Machine". This 
+        will only be used to insert the machine learning algorithm name into the title of the plot
+                    
 
     Returns
     -------
@@ -429,12 +402,12 @@ def createMlAlgorithmNoiseEffectPlot(wpTestAccuracy, wpValAccuracy,
 
     """
     plt.figure()
-    plt.plot(noiseLevelPerc, wpTestAccuracy, color = 'red', ls = '--', label = "Test WaterPump Dataset")
-    plt.plot(noiseLevelPerc, wpValAccuracy, color = 'red', ls = ':', label = "Validation WaterPump Dataset")
-    plt.plot(noiseLevelPerc, cITestAccuracy, color = 'green', ls = '--', label = "Test Census Income Dataset")
-    plt.plot(noiseLevelPerc, cIValAccuracy, color = 'green', ls = ':', label = "Validation Census Income Dataset")
-    plt.plot(noiseLevelPerc, cCDTestAccuracy, color = 'royalblue', ls ='--', label = "Test Credit Card Default Dataset")
-    plt.plot(noiseLevelPerc, cCDValAccuracy, color = 'royalblue', ls = ':', label = "Validation Credit Card Default Dataset")
+    plt.plot(noisePercLevels, wpTestAccuracy, color = 'red', ls = '--', label = "Test WaterPump Dataset")
+    plt.plot(noisePercLevels, wpValAccuracy, color = 'red', ls = ':', label = "Validation WaterPump Dataset")
+    plt.plot(noisePercLevels, cITestAccuracy, color = 'green', ls = '--', label = "Test Census Income Dataset")
+    plt.plot(noisePercLevels, cIValAccuracy, color = 'green', ls = ':', label = "Validation Census Income Dataset")
+    plt.plot(noisePercLevels, cCDTestAccuracy, color = 'royalblue', ls ='--', label = "Test Credit Card Default Dataset")
+    plt.plot(noisePercLevels, cCDValAccuracy, color = 'royalblue', ls = ':', label = "Validation Credit Card Default Dataset")
     plt.legend()
     plt.xlabel("Noise %")
     plt.ylabel("Average Accuracy %")
@@ -444,7 +417,7 @@ def createMlAlgorithmNoiseEffectPlot(wpTestAccuracy, wpValAccuracy,
 def createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAccuracy, wpXgbValAccuracy, wpDtTestAccuracy, wpDtValAccuracy,
                                   cIRfTestAccuracy, cIRfValAccuracy, cIXgbTestAccuracy, cIXgbValAccuracy, cIDtTestAccuracy, cIDtValAccuracy, 
                                   cCDRfTestAccuracy, cCDRfValAccuracy, cCDXgbTestAccuracy, cCDXgbValAccuracy, cCDDtTestAccuracy, cCDDtValAccuracy,
-                                  noiseLevelPerc):
+                                  noisePercLevels):
     """
     Generate a matplotlib plot showcasing the noise effect on the average accuracy of Random Forest, 
     XGBoost and decision tree models applied to 3 datasets. 
@@ -487,7 +460,7 @@ def createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAc
         DESCRIPTION.
     cCDDtValAccuracy : [float]
         DESCRIPTION.
-    noiseLevelPerc : [float]
+    noisePercLevels : [float]
         DESCRIPTION.
 
     Returns
@@ -511,14 +484,14 @@ def createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAc
     
     
     # rf
-    plt.plot(noiseLevelPerc, meanRfTestAccuracy, color = 'brown', linestyle = 'dotted', label = "Random Forest Test")
-    plt.plot(noiseLevelPerc, meanRfValAccuracy, color = 'brown', ls='-', label = "Random Forest Validation")
+    plt.plot(noisePercLevels, meanRfTestAccuracy, color = 'brown', linestyle = 'dotted', label = "Random Forest Test")
+    plt.plot(noisePercLevels, meanRfValAccuracy, color = 'brown', ls='-', label = "Random Forest Validation")
     # xgb
-    plt.plot(noiseLevelPerc, meanXgbTestAccuracy, color = 'cyan', linestyle = 'dotted', label = "XGBoost Test")
-    plt.plot(noiseLevelPerc, meanXgbValAccuracy, color = 'cyan', ls='-', label = "XGBoost Validation")
+    plt.plot(noisePercLevels, meanXgbTestAccuracy, color = 'cyan', linestyle = 'dotted', label = "XGBoost Test")
+    plt.plot(noisePercLevels, meanXgbValAccuracy, color = 'cyan', ls='-', label = "XGBoost Validation")
     ## dt 
-    plt.plot(noiseLevelPerc, meanDtTestAccuracy, color = 'gold', linestyle = 'dotted', label = "Decsion Tree Test")
-    plt.plot(noiseLevelPerc, meanDtValAccuracy, color = 'gold', ls='-', label = "Decsion Tree Validation")
+    plt.plot(noisePercLevels, meanDtTestAccuracy, color = 'gold', linestyle = 'dotted', label = "Decsion Tree Test")
+    plt.plot(noisePercLevels, meanDtValAccuracy, color = 'gold', ls='-', label = "Decsion Tree Validation")
     
     plt.legend()
     plt.xlabel("Noise %")
@@ -529,79 +502,85 @@ def createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAc
   
 
 ########### Get accuracy of specifc datasets and algorithms for specific noise levels ########
+#### Constants 
+## Create the noiseLevelPerc list for the % of noise to insert and for subsequent graphing purposes.
+NOISEPERCLEVELS = list(range(0, 51, 1)) # 0,1,2,....,50 
+# (Note: It doesnt make theoretical sense to insert noise greater than 50%, as you would see a reflection)
+# To change simply change range in the format range(startAt, stopBefore, incrementBy)
+
 ####### WaterPump dataset 
 ## rf     
-wpRfTestAccuracy, wpRfValAccuracy, wpRfNoiseLevelPerc = rfNoiseEffect(wpData, 0, 50, 51)
+wpRfTestAccuracy, wpRfValAccuracy = rfNoiseEffect(wpData, NOISEPERCLEVELS)
 ## xgb
-wpXgbTestAccuracy, wpXgbValAccuracy, wpXgbNoiseLevelPerc = xgbNoiseEffect(wpData, 0, 50, 51)
+wpXgbTestAccuracy, wpXgbValAccuracy = xgbNoiseEffect(wpData, NOISEPERCLEVELS)
 ## dt 
-wpDtTestAccuracy, wpDtValAccuracy, wpDtNoiseLevelPerc = dtNoiseEffect(wpData, 0, 50, 51)
+wpDtTestAccuracy, wpDtValAccuracy = dtNoiseEffect(wpData, NOISEPERCLEVELS)
 ## svm 
-wpSvmTestAccuracy, wpSvmValAccuracy, wpSvmNoiseLevelPerc = svmNoiseEffect(wpData, 0, 50, 51)
+wpSvmTestAccuracy, wpSvmValAccuracy = svmNoiseEffect(wpData, NOISEPERCLEVELS)
 
 ####### Census Income dataset 
 ## rf     
-cIRfTestAccuracy, cIRfValAccuracy, cIRfNoiseLevelPerc = rfNoiseEffect(cIData, 0, 50, 51)
+cIRfTestAccuracy, cIRfValAccuracy = rfNoiseEffect(cIData, NOISEPERCLEVELS)
 ## xgb
-cIXgbTestAccuracy, cIXgbValAccuracy, cIXgbNoiseLevelPerc = xgbNoiseEffect(cIData, 0, 50, 51)
+cIXgbTestAccuracy, cIXgbValAccuracy = xgbNoiseEffect(cIData, NOISEPERCLEVELS)
 ## dt 
-cIDtTestAccuracy, cIDtValAccuracy, cIDtNoiseLevelPerc = dtNoiseEffect(cIData, 0, 50, 51)
+cIDtTestAccuracy, cIDtValAccuracy = dtNoiseEffect(cIData, NOISEPERCLEVELS)
 ## svm 
-cISvmTestAccuracy, cISvmValAccuracy, cISvmNoiseLevelPerc = svmNoiseEffect(cIData, 0, 50, 51)
+cISvmTestAccuracy, cISvmValAccuracy = svmNoiseEffect(cIData, NOISEPERCLEVELS)
 
 ###### Credit Card Default dataset 
 ## rf
-cCDRfTestAccuracy, cCDRfValAccuracy, cCDRfNoiseLevelPerc = rfNoiseEffect(cCDData, 0, 50, 51)
+cCDRfTestAccuracy, cCDRfValAccuracy = rfNoiseEffect(cCDData, NOISEPERCLEVELS)
 ## xgb
-cCDXgbTestAccuracy, cCDXgbValAccuracy, cCDXgbNoiseLevelPerc = xgbNoiseEffect(cCDData, 0, 50, 51)
+cCDXgbTestAccuracy, cCDXgbValAccuracy = xgbNoiseEffect(cCDData, NOISEPERCLEVELS)
 ## dt 
-cCDDtTestAccuracy, cCDDtValAccuracy, cCDDtNoiseLevelPerc = dtNoiseEffect(cCDData, 0, 50, 51)
+cCDDtTestAccuracy, cCDDtValAccuracy = dtNoiseEffect(cCDData, NOISEPERCLEVELS)
 ## svm
-cCDSvmTestAccuracy, cCDSvmValAccuracy, cCDSvmNoiseLevelPerc = svmNoiseEffect(cCDData, 0, 50, 51)
+cCDSvmTestAccuracy, cCDSvmValAccuracy = svmNoiseEffect(cCDData, NOISEPERCLEVELS)
 
 
 ############################ Plots ##############################
 ############# Generate Simple plots for each algorithm applied to each dataset #####
 #### Waterpump dataset 
 ## rf
-createSingleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpRfNoiseLevelPerc, 
+createSingleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, NOISEPERCLEVELS, 
                             "Water Pump dataset", "Random Forest")
 ## xgb
-createSingleNoiseEffectPlot(wpXgbTestAccuracy, wpXgbValAccuracy, wpXgbNoiseLevelPerc,
+createSingleNoiseEffectPlot(wpXgbTestAccuracy, wpXgbValAccuracy, NOISEPERCLEVELS,
                             "Water Pump dataset", "XGBoost")
 ## dt
-createSingleNoiseEffectPlot(wpDtTestAccuracy, wpDtValAccuracy, wpDtNoiseLevelPerc, 
+createSingleNoiseEffectPlot(wpDtTestAccuracy, wpDtValAccuracy, NOISEPERCLEVELS, 
                             "Water Pump dataset", "Decsion Tree")
 ## svm
-createSingleNoiseEffectPlot(wpSvmTestAccuracy, wpSvmValAccuracy, wpSvmNoiseLevelPerc, 
+createSingleNoiseEffectPlot(wpSvmTestAccuracy, wpSvmValAccuracy, NOISEPERCLEVELS, 
                             "Water Pump dataset", "Support Vector Machine")
 
 #### Census Income 
 ## rf
-createSingleNoiseEffectPlot(cIRfTestAccuracy, cIRfValAccuracy, cIRfNoiseLevelPerc, 
+createSingleNoiseEffectPlot(cIRfTestAccuracy, cIRfValAccuracy, NOISEPERCLEVELS, 
                             "Census Income dataset", "Random Forest")
 ## xgb
-createSingleNoiseEffectPlot(cIXgbTestAccuracy, cIXgbValAccuracy, cIXgbNoiseLevelPerc, 
+createSingleNoiseEffectPlot(cIXgbTestAccuracy, cIXgbValAccuracy, NOISEPERCLEVELS, 
                             "Census Income dataset", "XGBoost")
 ## dt
-createSingleNoiseEffectPlot(cIDtTestAccuracy, cIDtValAccuracy, cIDtNoiseLevelPerc, 
+createSingleNoiseEffectPlot(cIDtTestAccuracy, cIDtValAccuracy, NOISEPERCLEVELS, 
                             "Census Income dataset", "Decison Tree")
 ## svm 
-createSingleNoiseEffectPlot(cISvmTestAccuracy, cISvmValAccuracy, cISvmNoiseLevelPerc, 
+createSingleNoiseEffectPlot(cISvmTestAccuracy, cISvmValAccuracy, NOISEPERCLEVELS, 
                             "Census Income dataset", "Support Vector Machine")
    
 #### Credit Card Default  
 ## rf
-createSingleNoiseEffectPlot(cCDRfTestAccuracy, cCDRfValAccuracy, cCDRfNoiseLevelPerc, 
+createSingleNoiseEffectPlot(cCDRfTestAccuracy, cCDRfValAccuracy, NOISEPERCLEVELS, 
                             "Credit Card Default dataset", "Random Forest")
 ## xgb
-createSingleNoiseEffectPlot(cCDXgbTestAccuracy, cCDXgbValAccuracy, cCDXgbNoiseLevelPerc, 
+createSingleNoiseEffectPlot(cCDXgbTestAccuracy, cCDXgbValAccuracy, NOISEPERCLEVELS, 
                             "Credit Card Default dataset", "XGBoost")
 ## dt
-createSingleNoiseEffectPlot(cCDDtTestAccuracy, cCDDtValAccuracy, cCDDtNoiseLevelPerc, 
+createSingleNoiseEffectPlot(cCDDtTestAccuracy, cCDDtValAccuracy, NOISEPERCLEVELS, 
                             "Credit Card Default dataset", "Decison Tree")
 ## svm 
-createSingleNoiseEffectPlot(cCDSvmTestAccuracy, cCDSvmValAccuracy, cCDSvmNoiseLevelPerc, 
+createSingleNoiseEffectPlot(cCDSvmTestAccuracy, cCDSvmValAccuracy, NOISEPERCLEVELS, 
                             "Credit Card Default dataset", "Support Vector Machine")
    
 
@@ -610,30 +589,30 @@ createSingleNoiseEffectPlot(cCDSvmTestAccuracy, cCDSvmValAccuracy, cCDSvmNoiseLe
 createMlAlgorithmNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy,
                                  cIRfTestAccuracy, cIRfValAccuracy,
                                  cCDRfTestAccuracy, cCDRfValAccuracy,
-                                 wpRfNoiseLevelPerc, "Random Forest")
+                                 NOISEPERCLEVELS, "Random Forest")
 #### xgb 
 createMlAlgorithmNoiseEffectPlot(wpXgbTestAccuracy, wpXgbValAccuracy,
                                  cIXgbTestAccuracy, cIXgbValAccuracy,
                                  cCDXgbTestAccuracy, cCDXgbValAccuracy,
-                                 wpXgbNoiseLevelPerc, "XGBoost")
+                                 NOISEPERCLEVELS, "XGBoost")
 #### dt 
 createMlAlgorithmNoiseEffectPlot(wpDtTestAccuracy, wpDtValAccuracy,
                                  cIDtTestAccuracy, cIDtValAccuracy,
                                  cCDDtTestAccuracy, cCDDtValAccuracy,
-                                 wpDtNoiseLevelPerc, "Decison Tree")
+                                 NOISEPERCLEVELS, "Decison Tree")
 
 #### svm
 createMlAlgorithmNoiseEffectPlot(wpSvmTestAccuracy, wpSvmValAccuracy,
                                  cISvmTestAccuracy, cISvmValAccuracy,
                                  cCDSvmTestAccuracy, cCDSvmValAccuracy,
-                                 wpSvmNoiseLevelPerc, "Support Vector Machine")
+                                 NOISEPERCLEVELS, "Support Vector Machine")
 
 
 ############## Average Ml Accuarcy for multiple datasets when noise is inserted #######
 createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAccuracy, wpXgbValAccuracy, wpDtTestAccuracy, wpDtValAccuracy,
                               cIRfTestAccuracy, cIRfValAccuracy, cIXgbTestAccuracy, cIXgbValAccuracy, cIDtTestAccuracy, cIDtValAccuracy,
                               cCDRfTestAccuracy, cCDRfValAccuracy, cCDXgbTestAccuracy, cCDXgbValAccuracy, cCDDtTestAccuracy, cCDDtValAccuracy,
-                              wpRfNoiseLevelPerc)
+                              NOISEPERCLEVELS)
   
       
 
@@ -867,53 +846,54 @@ def createCooksDistNoiseMitigationPlot(wpResults, cIResults, cCDResults, mlAlgor
 
 ################# Get the results of mitigation of noise effect using cooks distance  
 ##### Constants
-## Create the noiseLevelPerc list for graphing purposes.
-NOISEPERCLEVELS = list(range(0, 51, 1)) # 0,1,2,....,50
+## Create the noiseLevelPerc list for the % of noise to insert and for subsequent graphing purposes.
+NOISEPERCLEVELSMITIGATIONEXP = list(range(0, 51, 1)) # 0,1,2,....,50
+# To change simply change range in the format range(startAt, stopBefore, incrementBy)
 
 ######## Water pump dataset 
 ## rf
-wpRfNoiseMitigationResults = influentialPointEffect(rf, wpData, NOISEPERCLEVELS, 100) # Use default nTrees (=100)
+wpRfNoiseMitigationResults = influentialPointEffect(rf, wpData, NOISEPERCLEVELSMITIGATIONEXP, 100) # Use default nTrees (=100)
 ## xgb 
-wpXgbNoiseMitigationResults = influentialPointEffect(xgb, wpData, NOISEPERCLEVELS, 100) # Use default nTrees (=100)
+wpXgbNoiseMitigationResults = influentialPointEffect(xgb, wpData, NOISEPERCLEVELSMITIGATIONEXP, 100) # Use default nTrees (=100)
 ## svm
-wpSvmNoiseMitigationResults = influentialPointEffect(svm, wpData, NOISEPERCLEVELS)
+wpSvmNoiseMitigationResults = influentialPointEffect(svm, wpData, NOISEPERCLEVELSMITIGATIONEXP)
 ## dt 
-wpDtNoiseMitigationResults = influentialPointEffect(dt, wpData, NOISEPERCLEVELS)
+wpDtNoiseMitigationResults = influentialPointEffect(dt, wpData, NOISEPERCLEVELSMITIGATIONEXP)
 
 ######## Census Income dataset 
 ## rf
-cIRfNoiseMitigationResults = influentialPointEffect(rf, cIData, NOISEPERCLEVELS, 100) # Use default nTrees (=100)
+cIRfNoiseMitigationResults = influentialPointEffect(rf, cIData, NOISEPERCLEVELSMITIGATIONEXP, 100) # Use default nTrees (=100)
 ## xgb 
-cIXgbNoiseMitigationResults = influentialPointEffect(xgb, cIData, NOISEPERCLEVELS, 100) # Use default nTrees (=100)
+cIXgbNoiseMitigationResults = influentialPointEffect(xgb, cIData, NOISEPERCLEVELSMITIGATIONEXP, 100) # Use default nTrees (=100)
 ## svm
-cISvmNoiseMitigationResults = influentialPointEffect(svm, cIData, NOISEPERCLEVELS)
+cISvmNoiseMitigationResults = influentialPointEffect(svm, cIData, NOISEPERCLEVELSMITIGATIONEXP)
 ## dt 
-cIDtNoiseMitigationResults = influentialPointEffect(dt, cIData, NOISEPERCLEVELS)
+cIDtNoiseMitigationResults = influentialPointEffect(dt, cIData, NOISEPERCLEVELSMITIGATIONEXP)
 
 ######## Credit Card Default dataset 
 ## rf
-cCDRfNoiseMitigationResults = influentialPointEffect(rf, cCDData, NOISEPERCLEVELS, 100) # Use default nTrees (=100)
+cCDRfNoiseMitigationResults = influentialPointEffect(rf, cCDData, NOISEPERCLEVELSMITIGATIONEXP, 100) # Use default nTrees (=100)
 ## xgb 
-cCDXgbNoiseMitigationResults = influentialPointEffect(xgb, cCDData, NOISEPERCLEVELS, 100) # Use default nTrees (=100)
+cCDXgbNoiseMitigationResults = influentialPointEffect(xgb, cCDData, NOISEPERCLEVELSMITIGATIONEXP, 100) # Use default nTrees (=100)
 ## svm
-cCDSvmNoiseMitigationResults = influentialPointEffect(svm, cCDData, NOISEPERCLEVELS)
+cCDSvmNoiseMitigationResults = influentialPointEffect(svm, cCDData, NOISEPERCLEVELSMITIGATIONEXP)
 ## dt 
-cCDDtNoiseMitigationResults = influentialPointEffect(dt, cCDData, NOISEPERCLEVELS)
+cCDDtNoiseMitigationResults = influentialPointEffect(dt, cCDData, NOISEPERCLEVELSMITIGATIONEXP)
 
 
 #### Generate general plot where the average accuracy across the 3 datasets for each noise % is calculated
 # rf
 createCooksDistNoiseMitigationPlot(wpRfNoiseMitigationResults, cIRfNoiseMitigationResults, 
-                                   cCDRfNoiseMitigationResults, "Random Forest", NOISEPERCLEVELS)
+                                   cCDRfNoiseMitigationResults, "Random Forest", NOISEPERCLEVELSMITIGATIONEXP)
 # xgb
 createCooksDistNoiseMitigationPlot(wpXgbNoiseMitigationResults, cIXgbNoiseMitigationResults, 
-                                   cCDXgbNoiseMitigationResults, "XGBoost", NOISEPERCLEVELS)
+                                   cCDXgbNoiseMitigationResults, "XGBoost", NOISEPERCLEVELSMITIGATIONEXP)
 # svm
 createCooksDistNoiseMitigationPlot(wpSvmNoiseMitigationResults, cISvmNoiseMitigationResults, 
-                                   cCDSvmNoiseMitigationResults, "Support Vector Machine", NOISEPERCLEVELS)
+                                   cCDSvmNoiseMitigationResults, "Support Vector Machine", NOISEPERCLEVELSMITIGATIONEXP)
 # dt
 createCooksDistNoiseMitigationPlot(wpDtNoiseMitigationResults, cIDtNoiseMitigationResults, 
-                                   cCDDtNoiseMitigationResults, "Decision Tree", NOISEPERCLEVELS)
+                                   cCDDtNoiseMitigationResults, "Decision Tree", NOISEPERCLEVELSMITIGATIONEXP)
 
 
 
@@ -921,17 +901,17 @@ createCooksDistNoiseMitigationPlot(wpDtNoiseMitigationResults, cIDtNoiseMitigati
 ############################ Test if the number of trees provides insulation against noise ######################
 def createTreesNoiseInsulationPlot(test20T, val20T, test60T, val60T, test100T, val100T,
                                    test200T, val200T, test500T, val500T,
-                                   noiseLevelPerc, mlAlgoName):
-    plt.plot(noiseLevelPerc, test20T, color = 'pink', ls = '-', label = "20 Trees Test")
-    plt.plot(noiseLevelPerc, val20T, color = 'pink', ls = ':', label = "20 Trees Val")
-    plt.plot(noiseLevelPerc, test60T, color = 'coral', ls = '-', label = "60 Trees Test")
-    plt.plot(noiseLevelPerc, val60T, color = 'coral', ls = ':', label = "60 Trees Val")
-    plt.plot(noiseLevelPerc, test100T, color = 'orangered', ls = '-', label = "100 Trees Test")
-    plt.plot(noiseLevelPerc, val100T, color = 'orangered', ls = ':', label = "100 Trees Val")
-    plt.plot(noiseLevelPerc, test200T, color = 'indianred', ls = '-', label = "200 Trees Test")
-    plt.plot(noiseLevelPerc, val200T, color = 'indianred', ls = ':', label = "200 Trees Val")
-    plt.plot(noiseLevelPerc, test500T, color = 'maroon', ls = '-', label = "500 Trees Test")
-    plt.plot(noiseLevelPerc, val500T, color = 'maroon', ls = ':', label = "500 Trees Val")
+                                   noisePercLevels, mlAlgoName):
+    plt.plot(noisePercLevels, test20T, color = 'pink', ls = '-', label = "20 Trees Test")
+    plt.plot(noisePercLevels, val20T, color = 'pink', ls = ':', label = "20 Trees Val")
+    plt.plot(noisePercLevels, test60T, color = 'coral', ls = '-', label = "60 Trees Test")
+    plt.plot(noisePercLevels, val60T, color = 'coral', ls = ':', label = "60 Trees Val")
+    plt.plot(noisePercLevels, test100T, color = 'orangered', ls = '-', label = "100 Trees Test")
+    plt.plot(noisePercLevels, val100T, color = 'orangered', ls = ':', label = "100 Trees Val")
+    plt.plot(noisePercLevels, test200T, color = 'indianred', ls = '-', label = "200 Trees Test")
+    plt.plot(noisePercLevels, val200T, color = 'indianred', ls = ':', label = "200 Trees Val")
+    plt.plot(noisePercLevels, test500T, color = 'maroon', ls = '-', label = "500 Trees Test")
+    plt.plot(noisePercLevels, val500T, color = 'maroon', ls = ':', label = "500 Trees Val")
     
     plt.legend()
     plt.xlabel("Noise %")
@@ -940,42 +920,51 @@ def createTreesNoiseInsulationPlot(test20T, val20T, test60T, val60T, test100T, v
     plt.title("Note: Noise randomly inserted to binary target variable in training and test sets", fontsize=12)
 
 
+############### Get Accuracys to see if increasing the number of trees provides insulation agasints impact of noise ###################
+##### Constants
+## Create the noiseLevelPerc list for the % of noise to insert and for subsequent graphing purposes.
+NOISEPERCLEVELSMITIGATIONEXP = list(range(0, 51, 1)) # 0,1,2,....,50
+# To change simply change range in the format range(startAt, stopBefore, incrementBy)
+
+
 ######## Random Forest
 ## 20 trees
-wpRfTest20T, wpRfVal20T, wpRfNoiseLevelPerc20T = rfNoiseEffect(wpData, 0, 50, 51, 20)
+wpRfTest20T, wpRfVal20T = rfNoiseEffect(wpData, NOISEPERCLEVELSMITIGATIONEXP, 20)
 ## 60 trees
-wpRfTest60T, wpRfVal60T, wpRfNoiseLevelPerc60T = rfNoiseEffect(wpData, 0, 50, 51, 60)
+wpRfTest60T, wpRfVal60T = rfNoiseEffect(wpData, NOISEPERCLEVELSMITIGATIONEXP, 60)
 ## 100 trees
-# This is the deafult which has already been run. Results stored in vars: wpRfTestAccuracy, wpRfValAccuracy, wpRfNoiseLevelPerc
-wpRfTest100T, wpRfVal100T = wpRfTestAccuracy, wpRfValAccuracy
+# This is the deafult which has already been run. Results stored in vars: wpRfTestAccuracy, wpRfValAccuracy
+# wpRfTest100T, wpRfVal100T = wpRfTestAccuracy, wpRfValAccuracy
+wpRfTest100T, wpRfVal100T = rfNoiseEffect(wpData, NOISEPERCLEVELSMITIGATIONEXP, 100) # alternatively run code again 
 ## 200 trees
-wpRfTest200T, wpRfVal200T, wpRfNoiseLevelPerc200T = rfNoiseEffect(wpData, 0, 50, 51, 200)
+wpRfTest200T, wpRfVal200T = rfNoiseEffect(wpData, NOISEPERCLEVELSMITIGATIONEXP, 200)
 ## 500 trees
-wpRfTest500T, wpRfVal500T, wpRfNoiseLevelPerc500T = rfNoiseEffect(wpData, 0, 50, 51, 500)
+wpRfTest500T, wpRfVal500T = rfNoiseEffect(wpData, NOISEPERCLEVELSMITIGATIONEXP, 500)
 
 ## Generate plot
 createTreesNoiseInsulationPlot(wpRfTest20T, wpRfVal20T, wpRfTest60T, wpRfVal60T, wpRfTest100T, wpRfVal100T,
                                wpRfTest200T, wpRfVal200T, wpRfTest500T, wpRfVal500T, 
-                               wpRfNoiseLevelPerc20T, "Random Forest")
+                               NOISEPERCLEVELSMITIGATIONEXP, "Random Forest")
 
 
 ######## XGBoost
 ## 20 trees
-wpXgbTest20T, wpXgbVal20T, wpXgbNoiseLevelPerc20T = xgbNoiseEffect(wpData, 0, 50, 51, 20)
+wpXgbTest20T, wpXgbVal20T = xgbNoiseEffect(wpData, NOISEPERCLEVELSMITIGATIONEXP, 20)
 ## 60 trees
-wpXgbTest60T, wpXgbVal60T, wpXgbNoiseLevelPerc60T = xgbNoiseEffect(wpData, 0, 50, 51, 60)
+wpXgbTest60T, wpXgbVal60T = xgbNoiseEffect(wpData, NOISEPERCLEVELSMITIGATIONEXP, 60)
 ## 100 trees
 # This is the deafult which has already been run. Results stored in vars: wpXgbTestAccuracy, wpXgbValAccuracy, wpXgbNoiseLevelPerc
-wpXgbTest100T, wpXgbVal100T = wpXgbTestAccuracy, wpXgbValAccuracy
+# wpXgbTest100T, wpXgbVal100T = wpXgbTestAccuracy, wpXgbValAccuracy
+wpXgbTest100T, wpXgbVal100T = rfNoiseEffect(wpData, NOISEPERCLEVELSMITIGATIONEXP, 100) # alternatively run code again 
 ## 200 trees
-wpXgbTest200T, wpXgbVal200T, wpXgbNoiseLevelPerc200T = xgbNoiseEffect(wpData, 0, 50, 51, 200)
+wpXgbTest200T, wpXgbVal200T = xgbNoiseEffect(wpData, NOISEPERCLEVELSMITIGATIONEXP, 200)
 ## 500 trees
-wpXgbTest500T, wpXgbVal500T, wpXgbNoiseLevelPerc500T = xgbNoiseEffect(wpData, 0, 50, 51, 500)
+wpXgbTest500T, wpXgbVal500T = xgbNoiseEffect(wpData, NOISEPERCLEVELSMITIGATIONEXP, 500)
 
 ##### Generate plot
 createTreesNoiseInsulationPlot(wpXgbTest20T, wpXgbVal20T, wpXgbTest60T, wpXgbVal60T, wpXgbTest100T, wpXgbVal100T,
                                wpXgbTest200T, wpXgbVal200T, wpXgbTest500T, wpXgbVal500T, 
-                               wpXgbNoiseLevelPerc20T, "Xgboost")
+                               NOISEPERCLEVELSMITIGATIONEXP, "Xgboost")
 
 
 
