@@ -91,7 +91,7 @@ class Model():
             'n_jobs': -1,  # use all processing cores
             'n_estimators': nTrees, # 500 trees
             #'warm_start': True, 
-            #'max_depth': 8,  # depth of tree,(default = None)
+            'max_depth': 8,  # depth of tree,(default = None) (Important to have one to reduce computation time)
             'min_samples_leaf': 100, # Too small a number will result in overfitting 
             'max_features' : 'sqrt', # Better than setting it as 0.2 due to size of datasets
             'verbose': 0 #suppresses all text while a value of 3 outputs the tree learning process at every iteration

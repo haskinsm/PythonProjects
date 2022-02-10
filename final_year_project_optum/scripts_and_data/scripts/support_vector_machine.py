@@ -77,7 +77,7 @@ class Model():
         None.
 
         """
-        svmModel = svm.SVC()
+        svmModel = svm.LinearSVC() # Use Linear SVC kernel to avoid convergence issues (Also much faster) 
         
         ## Train the model using the training sets
         self.svm = svmModel.fit(self.train.iloc[:,:-1], self.train.iloc[:,-1]) # x var and y target var 
