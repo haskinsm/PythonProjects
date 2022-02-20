@@ -27,7 +27,7 @@ Functions:
 import os
 import pandas as pd 
 import matplotlib.pyplot as plt
-from yellowbrick.regressor import cooks_distance
+from yellowbrick.regressor import CooksDistance #cooks_distance
 import statistics
 
 ############ Internal Imports (i.e. Self written)
@@ -618,7 +618,7 @@ createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAccura
   
       
 
-
+"""
 ################## Saving results ###########
 ##### Due to long running time 
 # Store Results in Dict  
@@ -634,7 +634,7 @@ df = pd.DataFrame(dataList)
 csvFilePath = os.path.join(CORRECTDIR, "\\accuracy_results.csv")
 # Save results as a csv file
 df.to_csv(csvFilePath, header = True)
-
+"""
 
 
 ###################################################################################################################################
@@ -667,36 +667,30 @@ def getCooksDistance(data):
     predictors = list(data.columns[:-1])
     predictorData = data[predictors]
     
-    #predictorData = np.nan_to_num(predictorData.astype(np.float64)) # This will convert everything to float 32 and if this results in inf they will be converted to max float 64
-    
+    # Instantiate and fit the cooks distance object
+    cooksD = CooksDistance()
+    cooksD.fit(predictorData, targetData)
+     
+    """ 
     # Instantiate and fit the visualizer
     cooksD = cooks_distance(
         predictorData, targetData,
         draw_threshold = True,
-        linefmt = "C0-", markerfmt = ",",
-        fig = plt.figure(figsize=(12,7)),
-        show = False
+        linefmt = "C0-", markerfmt = ","
     )
+    """
     
-    # Plot Cook's Distance
-    #cooksD.show()
     # Get outlier percentage (% where Cooks Distance is greater than the influence threshold)
     #cooksD.outlier_percentage_
-    return cooksD.distance_, cooksD.influence_threshold_
 
-"""
-##### Cooks distance 
-wpCooksDists, wpCooksThreshold = getCooksDistance(wpData.TRAIN)
-cCDCooksDists, cCDCooksThreshold = getCooksDistance(cCDData.TRAIN)
-cICooksDists, cICooksThreshold = getCooksDistance(cIData.TRAIN)
+    # Get distances and influence threshold 
+    distances, inflThreshold = cooksD.distance_, cooksD.influence_threshold_
+    #del cooksD 
+    return distances, inflThreshold
 
-# "In fact, a general rule of thumb is that D(i) > 4/n is a good threshold for determining highly
-# influential points as outliers and this visualizer can report the percentage of data that is 
-# above that threshold" - https://www.scikit-yb.org/en/latest/api/regressor/influence.html
-df = pd.DataFrame(wpCooksDists, columns = ['distances'])
-df2 = df[df['distances'] > wpCooksThreshold]
-df2.sort_values(by = 'distances', ascending = False, inplace = True)
-"""
+
+#cooksDists, cooksThreshold = getCooksDistance(wpData.TRAIN)
+
 
 def swapPercInfluenentialPoints(train, xTest, yTest, influentialTrain, influentialSwapPerc): 
     if( influentialSwapPerc > 100 or influentialSwapPerc < 0):
@@ -748,7 +742,7 @@ def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 1
             # Repeat 10 times and get the average accuracy 
             testAccuaracyAtIncrement = []
             valAccuaracyAtIncrement = []
-            for i in range(10): # Get average of only 10 models to speed up system
+            for i in range(5): # Get average of only 5 models to speed up system
                 # Insert % noise into the test and training sets
                 train = insertingNoise(train, noisePerc)
                 xTest, yTest = insertingNoiseTestSet(xTest, yTest, noisePerc)
@@ -780,8 +774,8 @@ def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 1
             valAccuracy.append(statistics.mean(valAccuaracyAtIncrement))
         
         ## Add the accuracys to results 
-        results['{}%Test'.format(noisePerc)] = testAccuracy
-        results['{}%Val'.format(noisePerc)] = valAccuracy
+        results['{}%Test'.format(swapPerc)] = testAccuracy
+        results['{}%Val'.format(swapPerc)] = valAccuracy
     
     return results
 
@@ -848,7 +842,7 @@ def createCooksDistNoiseMitigationPlot(wpResults, cIResults, cCDResults, mlAlgor
 ################# Get the results of mitigation of noise effect using cooks distance  
 ##### Constants
 ## Create the noiseLevelPerc list for the % of noise to insert and for subsequent graphing purposes.
-NOISEPERCLEVELSMITIGATIONEXP = list(range(0, 51, 1)) # 0,1,2,....,50
+NOISEPERCLEVELSMITIGATIONEXP = list(range(0, 51, 2)) # 0,1,2,....,50
 # To change simply change range in the format range(startAt, stopBefore, incrementBy)
 
 ######## Water pump dataset 
