@@ -199,8 +199,7 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 100):
 
     """
    
-    testAccuracy = []
-    valAccuracy = []
+    testAccuracy, valAccuracy, valF1, valAuc = [], [], [], []
     train = dataRef.TRAIN 
     xTest = dataRef.XTEST
     yTest = dataRef.YTEST
@@ -210,6 +209,9 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 100):
         # Get average accuracy at this perc noise interval
         testAccuaracyAtIncrement = []
         valAccuaracyAtIncrement = []
+        valF1AtIncrement = []
+        valAucAtIncrement = []
+        
         # Get average of only 10 models to speed up system 
         for i in range(10): 
             train = insertingNoise(dataRef.TRAIN, noisePerc)
@@ -221,14 +223,17 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 100):
             testAccuaracyAtIncrement.append(modelTestAccuracy)
             modelValAccuaracy = obj.validAccuracy()
             valAccuaracyAtIncrement.append(modelValAccuaracy)
+            modelValF1 = obj.F1ScoreValid()
+            valF1AtIncrement.append(modelValF1)
             
             # delete variables that take up a lot of space
             del train, xTest, yTest, obj
             
         testAccuracy.append(statistics.mean(testAccuaracyAtIncrement))
         valAccuracy.append(statistics.mean(valAccuaracyAtIncrement))
+        valF1.append(statistics.mean(valF1AtIncrement))
     
-    return testAccuracy, valAccuracy
+    return testAccuracy, valAccuracy, valF1
         
 def rfNoiseEffect(dataRef, noisePercLevels, nTrees = 100):
     """
@@ -501,7 +506,7 @@ def createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAc
     plt.title("Note: Noise randomly inserted to binary target variable in training and test sets", fontsize=12)
   
 
-
+"""
 ########### Get accuracy of specifc datasets and algorithms for specific noise levels ########
 #### Constants 
 ## Create the noiseLevelPerc list for the % of noise to insert and for subsequent graphing purposes.
@@ -511,13 +516,13 @@ NOISEPERCLEVELS = list(range(0, 51, 1)) # 0,1,2,....,50
 
 ####### WaterPump dataset 
 ## rf     
-wpRfTestAccuracy, wpRfValAccuracy = rfNoiseEffect(wpData, NOISEPERCLEVELS)
+wpRfTestAccuracy, wpRfValAccuracy, wpRfValF1 = rfNoiseEffect(wpData, NOISEPERCLEVELS)
 ## xgb
-wpXgbTestAccuracy, wpXgbValAccuracy = xgbNoiseEffect(wpData, NOISEPERCLEVELS)
+wpXgbTestAccuracy, wpXgbValAccuracy, wpXgbValF1 = xgbNoiseEffect(wpData, NOISEPERCLEVELS)
 ## dt 
-wpDtTestAccuracy, wpDtValAccuracy = dtNoiseEffect(wpData, NOISEPERCLEVELS)
+wpDtTestAccuracy, wpDtValAccuracy, wpDtValF1 = dtNoiseEffect(wpData, NOISEPERCLEVELS)
 ## svm 
-wpSvmTestAccuracy, wpSvmValAccuracy = svmNoiseEffect(wpData, NOISEPERCLEVELS)
+wpSvmTestAccuracy, wpSvmValAccuracy, wpSvmValF1 = svmNoiseEffect(wpData, NOISEPERCLEVELS)
 
 ####### Census Income dataset 
 ## rf     
@@ -541,7 +546,7 @@ cCDSvmTestAccuracy, cCDSvmValAccuracy = svmNoiseEffect(cCDData, NOISEPERCLEVELS)
 
 
 ############################ Plots ##############################
-"""
+
 ############# Generate Simple plots for each algorithm applied to each dataset #####
 #### Waterpump dataset 
 ## rf
@@ -584,7 +589,7 @@ createSingleNoiseEffectPlot(cCDDtTestAccuracy, cCDDtValAccuracy, NOISEPERCLEVELS
 ## svm 
 #createSingleNoiseEffectPlot(cCDSvmTestAccuracy, cCDSvmValAccuracy, NOISEPERCLEVELS, 
 #                            "Credit Card Default dataset", "Support Vector Machine")
-"""
+
 
 #############  Noise Effect for specific ml algorithm on multiple datasets ######
 #### rf
@@ -618,7 +623,7 @@ createMultipleNoiseEffectPlot(wpRfTestAccuracy, wpRfValAccuracy, wpXgbTestAccura
   
       
 
-"""
+
 ################## Saving results ###########
 ##### Due to long running time 
 # Store Results in Dict  
@@ -685,7 +690,10 @@ def getCooksDistance(data):
 
     # Get distances and influence threshold 
     distances, inflThreshold = cooksD.distance_, cooksD.influence_threshold_
-    #del cooksD 
+    
+    # Free up memory by deleting object 
+    del cooksD 
+    
     return distances, inflThreshold
 
 
@@ -719,7 +727,7 @@ def swapPercInfluenentialPoints(train, xTest, yTest, influentialTrain, influenti
     ### Split back into xTest and yTest
     newXTest, newYTest = newTest.iloc[:, :-1], newTest.iloc[:, -1]
     
-    return newTrain, newXTest, newYTest  
+    return newTrain, newXTest, newYTest, numToChange, len(train) 
 
 def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 100):
    
@@ -738,25 +746,35 @@ def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 1
         # Create lists to store the results
         testAccuracy = []
         valAccuracy = []
+        
+        numSwappeddddd = []
+        lenTrainnnn = []
+        
         for noisePerc in noisePercLevels:
             # Repeat 10 times and get the average accuracy 
             testAccuaracyAtIncrement = []
             valAccuaracyAtIncrement = []
+            valF1AtIncrement = []
+            
+            numSwapped = 0 
+            lenTrain = 0
+            
             for i in range(5): # Get average of only 5 models to speed up system
                 # Insert % noise into the test and training sets
-                train = insertingNoise(train, noisePerc)
-                xTest, yTest = insertingNoiseTestSet(xTest, yTest, noisePerc)
+                noiseTrain = insertingNoise(train, noisePerc)
+                noiseXTest, noiseYTest = insertingNoiseTestSet(xTest, yTest, noisePerc)
                 
                 ### Swapping the top % of most influential points from the training to test set
                 # Get influential points in the training set using cooks distance 
-                cooksDists, cooksThreshold = getCooksDistance(train)
+                cooksDists, cooksThreshold = getCooksDistance(noiseTrain)
                 # Get the influential points df
                 cooksDists = pd.DataFrame(cooksDists, columns = ['distances'])
                 influentialTrainDf = cooksDists[cooksDists['distances'] > cooksThreshold]
                 influentialTrainDf.sort_values(by = 'distances', ascending = False, inplace = True)
                 # Now get the new training and test setafter the influential points have been swapped 
-                swappedTrain, swappedXTest, swappedYTest = swapPercInfluenentialPoints(train, xTest, yTest, 
-                                                                           influentialTrainDf, swapPerc)
+                swappedTrain, swappedXTest, swappedYTest, numSwapped, lenTrain = swapPercInfluenentialPoints(
+                                                                                    noiseTrain, noiseXTest, noiseYTest, 
+                                                                                    influentialTrainDf, swapPerc)
     
                 ### Now create an object of the relevant machine learning algorithm class 
                 obj = mlAlgoScriptRef.Model(dataRef.TARGET_VAR_NAME, swappedTrain, swappedXTest, swappedYTest,
@@ -768,14 +786,23 @@ def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 1
                 testAccuaracyAtIncrement.append(modelTestAccuracy)
                 modelValAccuaracy = obj.validAccuracy()
                 valAccuaracyAtIncrement.append(modelValAccuaracy)
+                
+                
+                # Free up memory by deleting object
+                del obj 
             
             # Get the average accuracy and add it to the test and val accuracy lists
             testAccuracy.append(statistics.mean(testAccuaracyAtIncrement))
             valAccuracy.append(statistics.mean(valAccuaracyAtIncrement))
+            
+            lenTrainnnn.append(lenTrain)
+            numSwappeddddd.append(numSwapped)
         
         ## Add the accuracys to results 
         results['{}%Test'.format(swapPerc)] = testAccuracy
         results['{}%Val'.format(swapPerc)] = valAccuracy
+        results['{}%NumSwapped'.format(swapPerc)] = numSwappeddddd
+        results['{}%LengthTrain'.format(swapPerc)] = lenTrainnnn
     
     return results
 
@@ -791,25 +818,25 @@ def createCooksDistNoiseMitigationPlot(wpResults, cIResults, cCDResults, mlAlgor
     mean80PercSwapTestAccuracy,  mean80PercSwapValAccuracy = [], []
     mean100PercSwapTestAccuracy, mean100PercSwapValAccuracy = [], []
 
-    
-    for i in range(len(wpResults[1])):
-        mean0PercSwapTestAccuracy.append( wpResults['0%Test'][i] + cIResults['0%Test'][i] + cCDResults['0%Test'][i] /3)
-        mean0PercSwapValAccuracy.append( wpResults['0%Val'][i] + cIResults['0%Val'][i] + cCDResults['0%Val'][i] /3)
+    # Get length of noise level percentages list (to ascertain how long each list in the results dicts are)
+    for i in range( len(noiseLevelPerc) ): #len(next(iter(wpRfNoiseMitigationResults.values()))) ):
+        mean0PercSwapTestAccuracy.append( (wpResults['0%Test'][i] + cIResults['0%Test'][i] + cCDResults['0%Test'][i])/3 )
+        mean0PercSwapValAccuracy.append( (wpResults['0%Val'][i] + cIResults['0%Val'][i] + cCDResults['0%Val'][i])/3 )
        
-        mean20PercSwapTestAccuracy.append( wpResults['20%Test'][i] + cIResults['20%Test'][i] + cCDResults['20%Test'][i] /3)
-        mean20PercSwapValAccuracy.append( wpResults['20%Val'][i] + cIResults['20%Val'][i] + cCDResults['20%Val'][i] /3)
+        mean20PercSwapTestAccuracy.append( (wpResults['20%Test'][i] + cIResults['20%Test'][i] + cCDResults['20%Test'][i])/3 )
+        mean20PercSwapValAccuracy.append( (wpResults['20%Val'][i] + cIResults['20%Val'][i] + cCDResults['20%Val'][i])/3 )
        
-        mean40PercSwapTestAccuracy.append( wpResults['40%Test'][i] + cIResults['40%Test'][i] + cCDResults['40%Test'][i] /3)
-        mean40PercSwapValAccuracy.append( wpResults['40%Val'][i] + cIResults['40%Val'][i] + cCDResults['40%Val'][i] /3)
+        mean40PercSwapTestAccuracy.append( (wpResults['40%Test'][i] + cIResults['40%Test'][i] + cCDResults['40%Test'][i])/3 )
+        mean40PercSwapValAccuracy.append( (wpResults['40%Val'][i] + cIResults['40%Val'][i] + cCDResults['40%Val'][i])/3 )
         
-        mean60PercSwapTestAccuracy.append( wpResults['60%Test'][i] + cIResults['60%Test'][i] + cCDResults['60%Test'][i] /3)
-        mean60PercSwapValAccuracy.append( wpResults['60%Val'][i] + cIResults['60%Val'][i] + cCDResults['60%Val'][i] /3)
+        mean60PercSwapTestAccuracy.append( (wpResults['60%Test'][i] + cIResults['60%Test'][i] + cCDResults['60%Test'][i])/3 )
+        mean60PercSwapValAccuracy.append( (wpResults['60%Val'][i] + cIResults['60%Val'][i] + cCDResults['60%Val'][i])/3 )
        
-        mean80PercSwapTestAccuracy.append( wpResults['80%Test'][i] + cIResults['80%Test'][i] + cCDResults['80%Test'][i] /3)
-        mean80PercSwapValAccuracy.append( wpResults['80%Val'][i] + cIResults['80%Val'][i] + cCDResults['80%Val'][i] /3)
+        mean80PercSwapTestAccuracy.append( (wpResults['80%Test'][i] + cIResults['80%Test'][i] + cCDResults['80%Test'][i])/3 )
+        mean80PercSwapValAccuracy.append( (wpResults['80%Val'][i] + cIResults['80%Val'][i] + cCDResults['80%Val'][i])/3 )
        
-        mean100PercSwapTestAccuracy.append( wpResults['100%Test'][i] + cIResults['100%Test'][i] + cCDResults['100%Test'][i] /3)
-        mean100PercSwapValAccuracy.append( wpResults['100%Val'][i] + cIResults['100%Val'][i] + cCDResults['100%Val'][i] /3)
+        mean100PercSwapTestAccuracy.append( (wpResults['100%Test'][i] + cIResults['100%Test'][i] + cCDResults['100%Test'][i])/3 )
+        mean100PercSwapValAccuracy.append( (wpResults['100%Val'][i] + cIResults['100%Val'][i] + cCDResults['100%Val'][i])/3 )
        
     
     # 0%
@@ -825,8 +852,8 @@ def createCooksDistNoiseMitigationPlot(wpResults, cIResults, cCDResults, mlAlgor
     plt.plot(noiseLevelPerc, mean60PercSwapTestAccuracy, color = 'indianred', linestyle = 'dotted', label = "60% Test")
     plt.plot(noiseLevelPerc, mean60PercSwapValAccuracy, color = 'indianred', ls='-', label = "60% Validation")
     # 80%
-    plt.plot(noiseLevelPerc, mean0PercSwapTestAccuracy, color = 'marroon', linestyle = 'dotted', label = "80% Test")
-    plt.plot(noiseLevelPerc, mean0PercSwapValAccuracy, color = 'marroon', ls='-', label = "80% Validation")
+    plt.plot(noiseLevelPerc, mean0PercSwapTestAccuracy, color = 'maroon', linestyle = 'dotted', label = "80% Test")
+    plt.plot(noiseLevelPerc, mean0PercSwapValAccuracy, color = 'maroon', ls='-', label = "80% Validation")
     # 100%
     plt.plot(noiseLevelPerc, mean0PercSwapTestAccuracy, color = 'black', linestyle = 'dotted', label = "100% Test")
     plt.plot(noiseLevelPerc, mean0PercSwapValAccuracy, color = 'black', ls='-', label = "100% Validation")
@@ -844,6 +871,10 @@ def createCooksDistNoiseMitigationPlot(wpResults, cIResults, cCDResults, mlAlgor
 ## Create the noiseLevelPerc list for the % of noise to insert and for subsequent graphing purposes.
 NOISEPERCLEVELSMITIGATIONEXP = list(range(0, 51, 2)) # 0,1,2,....,50
 # To change simply change range in the format range(startAt, stopBefore, incrementBy)
+
+### Temp Testing
+wpRfNMRTesting = influentialPointEffect(rf, wpData, NOISEPERCLEVELSMITIGATIONEXP, 100)
+
 
 ######## Water pump dataset 
 ## rf
@@ -889,7 +920,6 @@ createCooksDistNoiseMitigationPlot(wpSvmNoiseMitigationResults, cISvmNoiseMitiga
 # dt
 createCooksDistNoiseMitigationPlot(wpDtNoiseMitigationResults, cIDtNoiseMitigationResults, 
                                    cCDDtNoiseMitigationResults, "Decision Tree", NOISEPERCLEVELSMITIGATIONEXP)
-
 
 
 
