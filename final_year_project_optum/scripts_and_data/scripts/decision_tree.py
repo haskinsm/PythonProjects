@@ -80,6 +80,11 @@ class Model():
         dtModel = DecisionTreeClassifier()
         self.dt = dtModel.fit(self.train.iloc[:,:-1], self.train.iloc[:,-1])
         
+        ## Make predictions using the model now to prevent it being made several times  
+        # ... prevents double predictions being calculated when F1 and Accuracy functions are both called. 
+        self.yTestPred = self.dt.predict(self.xTest)
+        self.yValidPred = self.dt.predict(self.xValid)
+        
     def modelAccuracy(self):
         """
         Returns decimal accuracy of decision tree model applied to the Test set. E.g. 0.9210...
@@ -90,10 +95,8 @@ class Model():
             Decimal accuracy of the model applied to the test set.  E.g. 0.9210...
 
         """
-        ## Make predictions using the model
-        yTestPred = self.dt.predict(self.xTest) 
         ## Return the accuracy of the model when applied to the test set 
-        return (metrics.accuracy_score(self.yTest, yTestPred)) 
+        return (metrics.accuracy_score(self.yTest, self.yTestPred)) 
     
     def validAccuracy(self):
         """
@@ -105,12 +108,35 @@ class Model():
             decimal accuracy of support vector machine model applied to validation set
 
         """
-        ## Make predictions using the model 
-        yValidPred = self.dt.predict(self.xValid)
         ## Return the accuracy of the model when applied ot the validation set 
-        return (metrics.accuracy_score(self.yValid, yValidPred))
+        return (metrics.accuracy_score(self.yValid, self.yValidPred))
+        
+    
+    def validF1score(self):
+        """
+        Returns F1 score of the model when applied to the validation set
+
+        Returns
+        -------
+        None.
+
+        """
+        ## Return the accuracy of the model when applied ot the validation set 
+        return (metrics.f1_score(self.yValid, self.yValidPred))
         
         
+    def validAUC(self):
+        """
+        Returns AUC of the model as a decimal when applied to the validation set 
+
+        Returns
+        -------
+        float
+            decimal AUC of the ROC curve for the model applied to the validation set
+
+        """
+        ## Return the AUC of the model when applied to the validation set 
+        return (metrics.roc_auc_score(self.yValid, self.yValidPred))
         
         
         

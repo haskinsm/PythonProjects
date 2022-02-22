@@ -89,7 +89,7 @@ class Model():
         """
         rf_params = {
             'n_jobs': -1,  # use all processing cores
-            'n_estimators': nTrees, # 500 trees
+            'n_estimators': nTrees, # number of trees
             #'warm_start': True, 
             'max_depth': 8,  # depth of tree,(default = None) (Important to have one to reduce computation time)
             'min_samples_leaf': 100, # Too small a number will result in overfitting 
@@ -114,6 +114,10 @@ class Model():
         ## Train the model using the training sets
         self.rf = self.rfHelper.fit(self.xTrain, self.yTrain)
         
+        ## Make predictions using the model now to prevent it being made several times  
+        # ... prevents double predictions being calculated when F1 and Accuracy functions are both called. 
+        self.yTestPred = self.rf.predict(self.xTest)
+        self.yValidPred = self.rf.predict(self.xValid)
         
         ### Delete no longer needed vars from memory 
         del train 
@@ -132,10 +136,8 @@ class Model():
             Decimal accuracy of the model applied to the test set.  E.g. 0.9210...
 
         """
-        ## Make predictions using the model
-        yTestPred = self.rf.predict(self.xTest) 
         ## Return the accuracy of the model when applied to the test set 
-        return (metrics.accuracy_score(self.yTest, yTestPred)) 
+        return (metrics.accuracy_score(self.yTest, self.yTestPred)) 
     
     
     def validAccuracy(self):
@@ -148,11 +150,32 @@ class Model():
             decimal accuracy of support vector machine model applied to validation set
 
         """ 
-        ## Make predictions using the model 
-        yValidPred = self.rf.predict(self.xValid)
         ## Return the accuracy of the model when applied ot the validation set 
-        return (metrics.accuracy_score(self.yValid, yValidPred))
+        return (metrics.accuracy_score(self.yValid, self.yValidPred))
         
+    def validF1score(self):
+        """
+        Returns F1 score of the model when applied to the validation set
+
+        Returns
+        -------
+        None.
+
+        """
+        ## Return the accuracy of the model when applied ot the validation set 
+        return (metrics.f1_score(self.yValid, self.yValidPred))
+    
+    def validAUC(self):
+        """
+        Returns AUC of the model as a decimal when applied to the validation set 
+
+        Returns
+        -------
+        None.
+
+        """
+        ## Return the AUC of the model when applied to the validation set 
+        return (metrics.roc_auc_score(self.yValid, self.yValidPred))
         
     def featureImportance(self):
         """

@@ -34,6 +34,8 @@ wpRfTest = wpRfObj.modelAccuracy() # get model test accuracy
 wpRfVal = wpRfObj.validAccuracy() # get model valid accuracy 
 wpRfFeatureImpPlot = wpRfObj.featureImportance() # get plot of feature importance 
 wpRfFeatureImpPlot.show(renderer="png") # render plot of feature importance 
+wpRfF1ScoreVal = wpRfObj.validF1Score()
+wpRfAucVal = wpRfObj.validAUC()
 
 ##### XGBoost
 # create shorter reference
