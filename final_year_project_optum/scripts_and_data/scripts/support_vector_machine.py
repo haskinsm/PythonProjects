@@ -117,7 +117,7 @@ class Model():
         return (metrics.accuracy_score(self.yValid, self.yValidPred))
 
 
-    def validF1score(self):
+    def validF1Score(self):
         """
         Returns F1 score of the model when applied to the validation set
 
