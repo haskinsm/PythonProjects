@@ -27,6 +27,7 @@ Functions:
 import os
 import pandas as pd 
 import matplotlib.pyplot as plt
+import numpy as np
 from yellowbrick.regressor import CooksDistance #cooks_distance
 import statistics
 
@@ -191,9 +192,9 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 100):
     Returns
     -------
     [] 
-        DESCRIPTION. List of test Accuaracys of random forest model when noise is applied   
+        DESCRIPTION. List of test Accuracys of random forest model when noise is applied   
     [] 
-        DESCRIPTION. List of validation Accuaracys of random forest model when noise is applied 
+        DESCRIPTION. List of validation Accuracys of random forest model when noise is applied 
     [] 
         DESCRIPTION. List of % noise increments that have been applied 
 
@@ -204,8 +205,8 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 100):
     for noisePerc in noisePercLevels:
         
         # Get average accuracy at this perc noise interval
-        testAccuaracyAtIncrement = []
-        valAccuaracyAtIncrement = []
+        testAccuracyAtIncrement = []
+        valAccuracyAtIncrement = []
         valF1AtIncrement = []
         valAUCAtIncrement = []
         
@@ -218,10 +219,10 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 100):
             
             # Get and append model perfromance measures to relevant lists
             modelTestAccuracy = obj.modelAccuracy() 
-            testAccuaracyAtIncrement.append(modelTestAccuracy)
+            testAccuracyAtIncrement.append(modelTestAccuracy)
             
-            modelValAccuaracy = obj.validAccuracy()
-            valAccuaracyAtIncrement.append(modelValAccuaracy)
+            modelValAccuracy = obj.validAccuracy()
+            valAccuracyAtIncrement.append(modelValAccuracy)
             
             modelValF1 = obj.validF1Score()
             valF1AtIncrement.append(modelValF1)
@@ -232,8 +233,8 @@ def noiseEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 100):
             # delete object as no loner needed 
             del obj
             
-        testAccuracy.append(statistics.mean(testAccuaracyAtIncrement))
-        valAccuracy.append(statistics.mean(valAccuaracyAtIncrement))
+        testAccuracy.append(statistics.mean(testAccuracyAtIncrement))
+        valAccuracy.append(statistics.mean(valAccuracyAtIncrement))
         valF1.append(statistics.mean(valF1AtIncrement))
         valAUC.append(statistics.mean(valAUCAtIncrement))
     
@@ -263,9 +264,9 @@ def rfNoiseEffect(dataRef, noisePercLevels, nTrees = 100):
     Returns
     -------
     [] 
-        DESCRIPTION. List of test Accuaracys of random forest model when noise is applied   
+        DESCRIPTION. List of test Accuracys of random forest model when noise is applied   
     [] 
-        DESCRIPTION. List of validation Accuaracys of random forest model when noise is applied 
+        DESCRIPTION. List of validation Accuracys of random forest model when noise is applied 
     [] 
         DESCRIPTION. List of % noise increments that have been applied 
 
@@ -288,9 +289,9 @@ def xgbNoiseEffect(dataRef, noisePercLevels, nTrees = 100):
     Returns
     -------
     [] 
-        DESCRIPTION. List of test Accuaracys of xgboost model when noise is applied   
+        DESCRIPTION. List of test Accuracys of xgboost model when noise is applied   
     [] 
-        DESCRIPTION. List of validation Accuaracys of xgboost model when noise is applied 
+        DESCRIPTION. List of validation Accuracys of xgboost model when noise is applied 
     [] 
         DESCRIPTION. List of % noise increments that have been applied 
 
@@ -313,9 +314,9 @@ def dtNoiseEffect(dataRef, noisePercLevels):
     Returns
     -------
     [] 
-        DESCRIPTION. List of test Accuaracys of decision tree model when noise is applied   
+        DESCRIPTION. List of test Accuracys of decision tree model when noise is applied   
     [] 
-        DESCRIPTION. List of validation Accuaracys of decision tree model when noise is applied 
+        DESCRIPTION. List of validation Accuracys of decision tree model when noise is applied 
     [] 
         DESCRIPTION. List of % noise increments that have been applied 
 
@@ -338,9 +339,9 @@ def svmNoiseEffect(dataRef, noisePercLevels):
     Returns
     -------
     [] 
-        DESCRIPTION. List of test Accuaracys of decision tree model when noise is applied   
+        DESCRIPTION. List of test Accuracys of decision tree model when noise is applied   
     [] 
-        DESCRIPTION. List of validation Accuaracys of decision tree model when noise is applied 
+        DESCRIPTION. List of validation Accuracys of decision tree model when noise is applied 
     [] 
         DESCRIPTION. List of % noise increments that have been applied 
 
@@ -791,49 +792,49 @@ def swapPercInfluenentialPoints(train, xTest, yTest, influentialTrain, influenti
     toChangeDists = influentialTrain.sample(n = numToChange) # add replace = True for replacement sampling 
     
     ### Remove the observations to change from the training set
-    toChangeIndexes = toChangeDists.index # get index of observations to change #******** might need to add [0]
-    # get observations with these indexes from the training set
-    influentialPoints = train.loc[toChangeIndexes, : ] #************ Problem with this as it assumes index goes from 1->maxlength-1
-    # and remove observations with these indexes from the training set
-    newTrain = train.copy() # create copy so original is not overwitten 
-    newTrain.drop(toChangeIndexes, inplace = True)
+    toChangeIndexes = toChangeDists.index # get index of observations to change             #******** might need to add [0]
+    # Get observations with these indexes from the training set
+    influentialPoints = train.loc[toChangeIndexes, : ]                      #************ Problem with this as it assumes index goes from 1->maxlength-1
+    # Remove observations with these indexes from the training set
+    train.drop(toChangeIndexes, inplace = True) 
+    # No need to create copy of train as copy is already created when noise is inserted so original will not be overwritten
     
     ### Now add the toChange df to the test set 
-    newTest = pd.concat([test, influentialPoints], axis = 0) #This will result in 
+    newTest = pd.concat([test, influentialPoints], axis = 0)  
     ### Split back into xTest and yTest
     newXTest, newYTest = newTest.iloc[:, :-1], newTest.iloc[:, -1]
     
-    return newTrain, newXTest, newYTest, numToChange, len(newTrain) 
+    ## Delete unneeded large variables from memory 
+    del test, newTest
+    
+    return train, newXTest, newYTest, numToChange 
 
 
 def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 100):
    
     # Create list of percentages of most influential points that will be swapped from the training to test set
     influentialSwapPercLevels = [0, 50, 100] #[0, 20, 40, 60, 80, 100]
-    
-    # Create copy of training set so original is not overwitten 
-    train = dataRef.TRAIN
-    xTest = dataRef.XTEST 
-    yTest = dataRef.YTEST
 
-    
+    # Create dict to store results 
+    results = {}
+        
     for swapPerc in influentialSwapPercLevels:
         # Create lists to store the results
         testAccuracy, valAccuracy, valF1, valAUC = [], [], [], []
-        lenTrainnnn, numPointsSwapped = [], []
+        numPointsSwapped = []
     
         
         for noisePerc in noisePercLevels:
             # Repeat 10 times and get the average accuracy 
-            testAccuaracyAtIncrement, valAccuaracyAtIncrement = [], []
+            testAccuracyAtIncrement, valAccuracyAtIncrement = [], []
             valF1AtIncrement, valAUCAtIncrement = [], []
             numPointsSwappedAtIncrement = []
-            lenTrain, numSwapped = 0, 0
+            numSwapped = 0
             
             for i in range(5): # Get average of only 5 models to speed up system
                 # Insert % noise into the test and training sets
-                noiseTrain = insertingNoise(train, noisePerc)
-                noiseXTest, noiseYTest = insertingNoiseTestSet(xTest, yTest, noisePerc)
+                noiseTrain = insertingNoise(dataRef.TRAIN, noisePerc)
+                noiseXTest, noiseYTest = insertingNoiseTestSet(dataRef.XTEST, dataRef.YTEST, noisePerc)
                 
                 #### Swapping the top % of most influential points from the training to test set
                 # Get influential points in the training set using cooks distance 
@@ -841,10 +842,10 @@ def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 1
                 # Get the influential points df
                 cooksDists = pd.DataFrame(cooksDists, columns = ['distances'])
                 influentialTrainDf = cooksDists[cooksDists['distances'] > cooksThreshold]
-                influentialTrainDf.sort_values(by = 'distances', ascending = False, inplace = True) ##*******Not sure if this is needed 
+                #influentialTrainDf.sort_values(by = 'distances', ascending = False, inplace = True) ##*******Not sure if this is needed 
                 
                 # Now get the new training and test setafter the influential points have been swapped 
-                swappedTrain, swappedXTest, swappedYTest, numSwapped, lenTrain = swapPercInfluenentialPoints(
+                swappedTrain, swappedXTest, swappedYTest, numSwapped = swapPercInfluenentialPoints(
                                                                                     noiseTrain, noiseXTest, noiseYTest, 
                                                                                     influentialTrainDf, swapPerc)
     
@@ -855,10 +856,10 @@ def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 1
                 
                 # Get and append model perfromance measures to relevant lists
                 modelTestAccuracy = obj.modelAccuracy() 
-                testAccuaracyAtIncrement.append(modelTestAccuracy)
+                testAccuracyAtIncrement.append(modelTestAccuracy)
                 
-                modelValAccuaracy = obj.validAccuracy()
-                valAccuaracyAtIncrement.append(modelValAccuaracy)
+                modelValAccuracy = obj.validAccuracy()
+                valAccuracyAtIncrement.append(modelValAccuracy)
                 
                 modelValF1 = obj.validF1Score()
                 valF1AtIncrement.append(modelValF1)
@@ -873,17 +874,12 @@ def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 1
                 del obj 
             
             # Get the average value of perfromance measures and add it to relevant list
-            testAccuracy.append(statistics.mean(testAccuaracyAtIncrement))
-            valAccuracy.append(statistics.mean(valAccuaracyAtIncrement))
+            testAccuracy.append(statistics.mean(testAccuracyAtIncrement))
+            valAccuracy.append(statistics.mean(valAccuracyAtIncrement))
             valF1.append(statistics.mean(valF1AtIncrement))
             valAUC.append(statistics.mean(valAUCAtIncrement))
-            numPointsSwapped.append(statistics.mean(numPointsSwappedAtIncrement))
-            
-            lenTrainnnn.append(lenTrain)
-            
+            numPointsSwapped.append(round(statistics.mean(numPointsSwappedAtIncrement)))
         
-        # Create dict to store results 
-        results = {}
         
         ## Add the perfromance measures to results dictionary
         results['{}%Test'.format(swapPerc)] = testAccuracy
@@ -892,7 +888,6 @@ def influentialPointEffect(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 1
         results['{}%ValAUC'.format(swapPerc)] = valAUC
         results['{}%NumSwapped'.format(swapPerc)] = numPointsSwapped
         
-        results['{}%LengthTrain'.format(swapPerc)] = lenTrainnnn #Temp
     
     return results
 
@@ -964,6 +959,7 @@ def createCooksDistNoiseMitigationPlot(wpResults, cIResults, cCDResults, mlAlgor
         mean0PercSwapNumPointsSwapped.append( (wpResults['0%NumSwapped'][i] + cIResults['0%NumSwapped'][i] + cCDResults['0%NumSwapped'][i])/3 )
         #mean20PercSwapNumPointsSwapped.append( (wpResults['20%NumSwapped'][i] + cIResults['20%NumSwapped'][i] + cCDResults['20%NumSwapped'][i])/3 )
         #mean40PercSwapNumPointsSwapped.append( (wpResults['40%NumSwapped'][i] + cIResults['40%NumSwapped'][i] + cCDResults['40%NumSwapped'][i])/3 )
+        mean50PercSwapNumPointsSwapped.append( (wpResults['50%NumSwapped'][i] + cIResults['50%NumSwapped'][i] + cCDResults['50%NumSwapped'][i])/3 )
         #mean60PercSwapNumPointsSwapped.append( (wpResults['60%NumSwapped'][i] + cIResults['60%NumSwapped'][i] + cCDResults['60%NumSwapped'][i])/3 )
         #mean80PercSwapNumPointsSwapped.append( (wpResults['80%NumSwapped'][i] + cIResults['80%NumSwapped'][i] + cCDResults['80%NumSwapped'][i])/3 )
         mean100PercSwapNumPointsSwapped.append( (wpResults['100%NumSwapped'][i] + cIResults['100%NumSwapped'][i] + cCDResults['100%NumSwapped'][i])/3 )
@@ -1070,8 +1066,9 @@ def createCooksDistNoiseMitigationPlot(wpResults, cIResults, cCDResults, mlAlgor
     
     #### Create histogram of number of influential points swapped 
     plt.figure() 
-    # 0%
-    plt.bar(mean0PercSwapNumPointsSwapped, color = 'lightgreen', ls = '-', label = "0%")
+    xPositions = np.arange(len(mean0PercSwapNumPointsSwapped))
+    # 0% (Intuitively this will be 0, so it will appear like its missing)
+    #plt.bar(xPositions + 0.00, mean0PercSwapNumPointsSwapped, width = 0.25, color = 'lightgreen', ls = '-', label = "0%")
     """
     # 20%
     plt.bar(mean20PercSwapNumPointsSwapped, color = 'lawngreen', ls = '-', label = "20%")
@@ -1083,16 +1080,16 @@ def createCooksDistNoiseMitigationPlot(wpResults, cIResults, cCDResults, mlAlgor
     plt.bar(mean80PercSwapNumPointsSwapped, color = 'darkgreen', ls = '-', label = "80%")
     """
     # 50%
-    plt.bar(mean50PercSwapNumPointsSwapped, color = 'mediumseagreen', ls = '-', label = "50%")
+    plt.bar(xPositions + 0.25, mean50PercSwapNumPointsSwapped, width = 0.25, color = 'mediumseagreen', ls = '-', label = "50%")
     # 100%
-    plt.bar(mean100PercSwapNumPointsSwapped, color = 'black', ls = '-', label = "100%")
+    plt.bar(xPositions + 0.50, mean100PercSwapNumPointsSwapped, width = 0.25, color = 'black', ls = '-', label = "100%")
     
     #plt.axis(noisePercLevels)
-    #plt.xticks(noisePercLevels)
+    plt.xticks(ticks = xPositions, labels = noisePercLevels)
     plt.legend(title = "Influential Points Swapped")
     plt.xlabel("Noise %")
     plt.ylabel("Number of points swapped")
-    plt.suptitle("Using Cooks Distance to Mitigate Impact of Noise on \n{} ".format(mlAlgorithmName) + r"$\bf{Validation \ AUC}$", fontsize=18)
+    plt.suptitle("Number of Influential Points Swapped from Training to Test set", fontsize=18)
    
 
 
@@ -1111,7 +1108,7 @@ cIRfNoiseMitigationResults = influentialPointEffect(rf, cIData, NOISEPERCLEVELSM
 ## Credit Card Default dataset 
 cCDRfNoiseMitigationResults = influentialPointEffect(rf, cCDData, NOISEPERCLEVELSMITIGATIONEXP, 100) # Use default nTrees (=100)
 
-#### xgb 
+#### xgb   
 ## waterpump
 wpXgbNoiseMitigationResults = influentialPointEffect(xgb, wpData, NOISEPERCLEVELSMITIGATIONEXP, 100) # Use default nTrees (=100)
 ## Census Income
@@ -1152,6 +1149,154 @@ createCooksDistNoiseMitigationPlot(wpDtNoiseMitigationResults, cIDtNoiseMitigati
 
 
 
+
+
+###### Additional sub experiement with Cooks Distance 
+# examining if swapping the 5% most influential points from the training set when 5% noise has been inserted increases accuracy
+def cooksDistNoiseMitigationExp2(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees):
+    # Create dict to store results 
+    results = {}
+        
+    # Create lists to store the results of models trained with original training data 
+    # (not swapping any points from the training to the test)
+    noSwapTestAccuracy, noSwapValAccuracy, noSwapValF1, noSwapValAUC = [], [], [], []
+    # and results of models trained with data that has been altered (swapping points from training to test)
+    testAccuracy, valAccuracy, valF1, valAUC = [], [], [], []
+    numPointsSwapped = []
+
+    
+    for noisePerc in noisePercLevels:
+        # Repeat 10 times and get the average accuracy 
+        noSwapTestAccuracyAtIncrement, noSwapValAccuracyAtIncrement = [], []
+        noSwapValF1AtIncrement, noSwapValAUCAtIncrement = [], []
+        
+        testAccuracyAtIncrement, valAccuracyAtIncrement = [], []
+        valF1AtIncrement, valAUCAtIncrement = [], []
+        numPointsSwappedAtIncrement = []
+        
+        for i in range(5): # Get average of only 5 models to speed up system
+           
+            # Insert % noise into the test and training sets
+            noiseTrain = insertingNoise(dataRef.TRAIN, noisePerc)
+            noiseXTest, noiseYTest = insertingNoiseTestSet(dataRef.XTEST, dataRef.YTEST, noisePerc)
+            
+            #####  Train basic model with no influential points swapped  
+            obj = mlAlgoScriptRef.Model(dataRef.TARGET_VAR_NAME, noiseTrain, noiseXTest, noiseYTest,
+                                        dataRef.XVALID, dataRef.YVALID)
+            obj.createModel(nTrees) # train the model 
+            
+            # Get and append model perfromance measures to relevant lists
+            noSwapModelTestAccuracy = obj.modelAccuracy() 
+            noSwapTestAccuracyAtIncrement.append(noSwapModelTestAccuracy)
+            
+            noSwapModelValAccuracy = obj.validAccuracy()
+            noSwapValAccuracyAtIncrement.append(noSwapModelValAccuracy)
+            
+            noSwapModelValF1 = obj.validF1Score()
+            noSwapValF1AtIncrement.append(noSwapModelValF1)
+            
+            noSwapModelValAUC = obj.validAUC()
+            noSwapValAUCAtIncrement.append(noSwapModelValAUC)
+            
+            # Free up memory by deleting object
+            del obj 
+            
+            
+            #### Swapping the top x% of most influential points from the training to test set, 
+            # where x is the noise perc level that has been inserted into the training set 
+            
+            # Get influential points in the training set using cooks distance 
+            cooksDists, cooksThreshold = getCooksDistance(noiseTrain)
+            # Get the influential points df
+            cooksDists = pd.DataFrame(cooksDists, columns = ['distances'])
+            cooksDists.sort_values(by = 'distances', ascending = False, inplace = True) 
+            
+            # Concat the xTest and yTest together
+            test = pd.concat([noiseXTest, noiseYTest], axis = 1)
+            
+            # get number of obs to change from the training set to the test
+            numObs = len(noiseTrain) 
+            numToChange = round(numObs * noisePerc/100)
+            # Select the points to change (points are already in order of cooks distance) 
+            toChangeDists = cooksDists[ :numToChange]
+            
+            ### Remove the observations to change from the training set
+            toChangeIndexes = toChangeDists.index # get index of observations to change             
+            # Get observations with these indexes from the training set
+            mostInfluentialPointsToSwap = noiseTrain.loc[toChangeIndexes, : ]                      
+            # Remove observations with these indexes from the training set
+            swappedTrain = noiseTrain.drop(toChangeIndexes)
+            
+            ### Now add the most influential points df to the test set 
+            swappedTest = pd.concat([test, mostInfluentialPointsToSwap], axis = 0)  
+            ### Split back into xTest and yTest
+            swappedXTest, swappedYTest = swappedTest.iloc[:, :-1], swappedTest.iloc[:, -1]
+            
+            
+            #### Now get results of a model trained using the now altered train and test sets
+            obj = mlAlgoScriptRef.Model(dataRef.TARGET_VAR_NAME, swappedTrain, swappedXTest, swappedYTest,
+                                        dataRef.XVALID, dataRef.YVALID)
+            obj.createModel(nTrees) # train the model 
+            
+            # Get and append model perfromance measures to relevant lists
+            modelTestAccuracy = obj.modelAccuracy() 
+            testAccuracyAtIncrement.append(modelTestAccuracy)
+            
+            modelValAccuracy = obj.validAccuracy()
+            valAccuracyAtIncrement.append(modelValAccuracy)
+            
+            modelValF1 = obj.validF1Score()
+            valF1AtIncrement.append(modelValF1)
+            
+            modelValAUC = obj.validAUC()
+            valAUCAtIncrement.append(modelValAUC)
+            
+            # Append number of points swapped at this increment of noise
+            numPointsSwappedAtIncrement.append(len(mostInfluentialPointsToSwap))
+            
+            # Free up memory by deleting object
+            del obj 
+        
+        # Get the average value of perfromance measures and add it to relevant list
+        # Noise only perfromance results 
+        noSwapTestAccuracy.append(statistics.mean(noSwapTestAccuracyAtIncrement))
+        noSwapValAccuracy.append(statistics.mean(noSwapValAccuracyAtIncrement))
+        noSwapValF1.append(statistics.mean(noSwapValF1AtIncrement))
+        noSwapValAUC.append(statistics.mean(noSwapValAUCAtIncrement))
+       
+        # Influential piints swapped results
+        testAccuracy.append(statistics.mean(testAccuracyAtIncrement))
+        valAccuracy.append(statistics.mean(valAccuracyAtIncrement))
+        valF1.append(statistics.mean(valF1AtIncrement))
+        valAUC.append(statistics.mean(valAUCAtIncrement))
+        numPointsSwapped.append(round(statistics.mean(numPointsSwappedAtIncrement)))
+    
+    
+    ## Add the perfromance measures to results dictionary
+    # The noise only perfroamnce reuslts
+    results['Test'] = noSwapTestAccuracy
+    results['Val'] = noSwapValAccuracy
+    results['ValF1'] = noSwapValF1
+    results['ValAUC'] = noSwapValAUC
+    
+    # The noise, and swapped influential points from train to test perfromance results
+    results['IPSTest'] = testAccuracy
+    results['IPSVal'] = valAccuracy
+    results['IPSValF1'] = valF1
+    results['IPSValAUC'] = valAUC
+    results['NumSwapped'] = numPointsSwapped
+    
+
+## Constant 
+NOISEPERCLEVELSMITIGATIONEXP2 = [0,1,2,3,4,5]
+
+##### Rf
+## Waterpump dataset
+wpRfCooksDistSubExp = cooksDistNoiseMitigationExp2(rf, wpData, NOISEPERCLEVELSMITIGATIONEXP2, 100) # Use default nTrees (=100)
+## Census Income
+cIRfCooksDistSubExp = cooksDistNoiseMitigationExp2(rf, cIData, NOISEPERCLEVELSMITIGATIONEXP2, 100) # Use default nTrees (=100)
+## Credit Card Default dataset 
+cCDRfCooksDistSubExp = cooksDistNoiseMitigationExp2(rf, cCDData, NOISEPERCLEVELSMITIGATIONEXP2, 100) # Use default nTrees (=100)
 
 
 
@@ -1400,5 +1545,7 @@ createTreesNoiseInsulationPlot(wpXgb20TResults, wpXgb60TResults, wpXgb100TResult
                                cCDXgb200TResults, cCDXgb500TResults,
                                NOISEPERCLEVELSMITIGATIONEXP, "XGBoost")
 
-
+a = [3,4,5,6,6,77,88]
+a.sort_values( ascending = False, inplace = True) 
+b = a[:3]
 
