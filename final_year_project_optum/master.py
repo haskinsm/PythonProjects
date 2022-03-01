@@ -1153,7 +1153,7 @@ createCooksDistNoiseMitigationPlot(wpDtNoiseMitigationResults, cIDtNoiseMitigati
 
 ###### Additional sub experiement with Cooks Distance 
 # examining if swapping the 5% most influential points from the training set when 5% noise has been inserted increases accuracy
-def cooksDistNoiseMitigationExp2(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees):
+def cooksDistNoiseMitigationExp2(mlAlgoScriptRef, dataRef, noisePercLevels, nTrees = 100):
     # Create dict to store results 
     results = {}
         
@@ -1286,7 +1286,47 @@ def cooksDistNoiseMitigationExp2(mlAlgoScriptRef, dataRef, noisePercLevels, nTre
     results['IPSValAUC'] = valAUC
     results['NumSwapped'] = numPointsSwapped
     
-
+    return results
+    
+def mergeExp2Results(wpResults, cIResults, cCDResults, noisePercLevels):
+    IPSTest, IPSVal, IPSValAUC, IPSValF1 = [], [], [], []
+    test, val, valAUC, valF1 = [], [], [], []
+    
+    results = {}
+    # Get length of noise level percentages list (to ascertain how long each list in the results dicts are)
+    for i in range( len(noisePercLevels) ): #len(next(iter(wpRfNoiseMitigationResults.values()))) ):
+        # Influential Points Swapped (IPS)
+        IPSTest.append( round((wpResults['IPSTest'][i] + cIResults['IPSTest'][i] + cCDResults['IPSTest'][i])/3, 3) )
+        IPSVal.append( round((wpResults['IPSVal'][i] + cIResults['IPSVal'][i] + cCDResults['IPSVal'][i])/3, 3) )
+        IPSValF1.append( round((wpResults['IPSValF1'][i] + cIResults['IPSValF1'][i] + cCDResults['IPSValF1'][i])/3, 3) )
+        IPSValAUC.append( round((wpResults['IPSValAUC'][i] + cIResults['IPSValAUC'][i] + cCDResults['IPSValAUC'][i])/3, 3) )
+    
+        # Just noise
+        test.append( round((wpResults['Test'][i] + cIResults['Test'][i] + cCDResults['Test'][i])/3, 3) )
+        val.append( round((wpResults['Val'][i] + cIResults['Val'][i] + cCDResults['Val'][i])/3, 3) )
+        valF1.append( round((wpResults['ValF1'][i] + cIResults['ValF1'][i] + cCDResults['ValF1'][i])/3, 3) )
+        valAUC.append( round((wpResults['ValAUC'][i] + cIResults['ValAUC'][i] + cCDResults['ValAUC'][i])/3, 3) )
+         
+    ## Add the perfromance measures to results dictionary
+    # The noise only perfroamnce reuslts
+    results['Test'] = test
+    results['Val'] = val
+    results['ValF1'] = valF1
+    results['ValAUC'] = valAUC
+    
+    # The noise, and swapped influential points from train to test perfromance results
+    results['IPSTest'] = IPSTest
+    results['IPSVal'] = IPSVal
+    results['IPSValF1'] = IPSValF1
+    results['IPSValAUC'] = IPSValAUC
+    
+    # Add number of Points swapped for each
+    results['NumSwappedWP'] = wpResults['NumSwapped']
+    results['NumSwappedCI'] = cIResults['NumSwapped']
+    results['NumSwappedCCD'] = cCDResults['NumSwapped']
+    
+    return results 
+        
 ## Constant 
 NOISEPERCLEVELSMITIGATIONEXP2 = [0,1,2,3,4,5]
 
@@ -1298,9 +1338,36 @@ cIRfCooksDistSubExp = cooksDistNoiseMitigationExp2(rf, cIData, NOISEPERCLEVELSMI
 ## Credit Card Default dataset 
 cCDRfCooksDistSubExp = cooksDistNoiseMitigationExp2(rf, cCDData, NOISEPERCLEVELSMITIGATIONEXP2, 100) # Use default nTrees (=100)
 
+##### XGB
+## Waterpump dataset
+wpXgbCooksDistSubExp = cooksDistNoiseMitigationExp2(xgb, wpData, NOISEPERCLEVELSMITIGATIONEXP2, 100) # Use default nTrees (=100)
+## Census Income
+cIXgbCooksDistSubExp = cooksDistNoiseMitigationExp2(xgb, cIData, NOISEPERCLEVELSMITIGATIONEXP2, 100) # Use default nTrees (=100)
+## Credit Card Default dataset 
+cCDXgbCooksDistSubExp = cooksDistNoiseMitigationExp2(xgb, cCDData, NOISEPERCLEVELSMITIGATIONEXP2, 100) # Use default nTrees (=100)
+
+##### SVM
+## Waterpump dataset
+wpSvmCooksDistSubExp = cooksDistNoiseMitigationExp2(svm, wpData, NOISEPERCLEVELSMITIGATIONEXP2)
+## Census Income
+cISvmCooksDistSubExp = cooksDistNoiseMitigationExp2(svm, cIData, NOISEPERCLEVELSMITIGATIONEXP2)
+## Credit Card Default dataset 
+cCDSvmCooksDistSubExp = cooksDistNoiseMitigationExp2(svm, cCDData, NOISEPERCLEVELSMITIGATIONEXP2)
+
+##### Decision Trees
+## Waterpump dataset
+wpDtCooksDistSubExp = cooksDistNoiseMitigationExp2(dt, wpData, NOISEPERCLEVELSMITIGATIONEXP2)
+## Census Income
+cIDtCooksDistSubExp = cooksDistNoiseMitigationExp2(dt, cIData, NOISEPERCLEVELSMITIGATIONEXP2)
+## Credit Card Default dataset 
+cCDDtCooksDistSubExp = cooksDistNoiseMitigationExp2(dt, cCDData, NOISEPERCLEVELSMITIGATIONEXP2)
 
 
-
+### Merge results 
+rfCooksDistSubExpResults = mergeExp2Results(wpRfCooksDistSubExp, cIRfCooksDistSubExp, cCDRfCooksDistSubExp, NOISEPERCLEVELSMITIGATIONEXP2)
+xgbCooksDistSubExpResults = mergeExp2Results(wpXgbCooksDistSubExp, cIXgbCooksDistSubExp, cCDXgbCooksDistSubExp, NOISEPERCLEVELSMITIGATIONEXP2)
+svmCooksDistSubExpResults = mergeExp2Results(wpSvmCooksDistSubExp, cISvmCooksDistSubExp, cCDSvmCooksDistSubExp, NOISEPERCLEVELSMITIGATIONEXP2)
+dtCooksDistSubExpResults = mergeExp2Results(wpDtCooksDistSubExp, cIDtCooksDistSubExp, cCDDtCooksDistSubExp, NOISEPERCLEVELSMITIGATIONEXP2)
 
 
 
@@ -1357,78 +1424,78 @@ def createTreesNoiseInsulationPlot(wp20TResults, wp60TResults, wp100TResults,
     # 20 Trees
     plt.plot(noisePercLevels, mean20TreeTestAccuracy, color = 'lightgreen', ls = '-', label = "20")
     # 60 Trees
-    plt.plot(noisePercLevels, mean60TreeTestAccuracy, color = 'lawngreen', ls = '-', label = "60 Trees")
+    plt.plot(noisePercLevels, mean60TreeTestAccuracy, color = 'lawngreen', ls = '-', label = "60")
     # 100 Trees 
-    plt.plot(noisePercLevels, mean100TreeTestAccuracy, color = 'limegreen', ls = '-', label = "100 Trees")
+    plt.plot(noisePercLevels, mean100TreeTestAccuracy, color = 'limegreen', ls = '-', label = "100")
     # 200 Trees
-    plt.plot(noisePercLevels, mean200TreeTestAccuracy, color = 'mediumseagreen', ls = '-', label = "200 Trees")
+    plt.plot(noisePercLevels, mean200TreeTestAccuracy, color = 'mediumseagreen', ls = '-', label = "200")
     # 500 Trees
-    plt.plot(noisePercLevels, mean500TreeTestAccuracy, color = 'darkgreen', ls = '-', label = "500 Trees")
+    plt.plot(noisePercLevels, mean500TreeTestAccuracy, color = 'darkgreen', ls = '-', label = "500")
     
     plt.legend(title = "Number of Trees")
     plt.xlabel("Noise %")
     plt.ylabel("Average Test Accuracy %")
-    plt.suptitle("Tree Insualtion against Noise {} ".format(mlAlgoName) + r"$\bf{Test \ Accuracy}$", fontsize=18)
+    plt.suptitle("Tree Insualtion against Noise Impact on {} ".format(mlAlgoName) + r"$\bf{Test \ Accuracy}$", fontsize=18)
 
 
     #### Val Accuracy Plot 
     plt.figure() # Instantiate a new figure 
 
     # 20 Trees
-    plt.plot(noisePercLevels, mean20TreeValAccuracy, color = 'lightgreen', ls = '-', label = "20 Trees")
+    plt.plot(noisePercLevels, mean20TreeValAccuracy, color = 'lightgreen', ls = '-', label = "20")
     # 60 Trees
-    plt.plot(noisePercLevels, mean60TreeValAccuracy, color = 'lawngreen', ls = '-', label = "60 Trees")
+    plt.plot(noisePercLevels, mean60TreeValAccuracy, color = 'lawngreen', ls = '-', label = "60")
     # 100 Trees 
-    plt.plot(noisePercLevels, mean100TreeValAccuracy, color = 'limegreen', ls = '-', label = "100 Trees")
+    plt.plot(noisePercLevels, mean100TreeValAccuracy, color = 'limegreen', ls = '-', label = "100")
     # 200 Trees
-    plt.plot(noisePercLevels, mean200TreeValAccuracy, color = 'mediumseagreen', ls = '-', label = "200 Trees")
+    plt.plot(noisePercLevels, mean200TreeValAccuracy, color = 'mediumseagreen', ls = '-', label = "200")
     # 500 Trees
-    plt.plot(noisePercLevels, mean500TreeValAccuracy, color = 'darkgreen', ls = '-', label = "500 Trees")
+    plt.plot(noisePercLevels, mean500TreeValAccuracy, color = 'darkgreen', ls = '-', label = "500")
     
     plt.legend(title = "Number of Trees")
     plt.xlabel("Noise %")
     plt.ylabel("Average Val Accuracy %")
-    plt.suptitle("Tree Insualtion against Noise {} ".format(mlAlgoName) + r"$\bf{Validation \ Accuracy}$", fontsize=18)
+    plt.suptitle("Tree Insualtion against Noise Impact on {} ".format(mlAlgoName) + r"$\bf{Validation \ Accuracy}$", fontsize=18)
 
 
     #### Validation F1 Score Plot 
     plt.figure() # Instantiate a new figure 
 
     # 20 Trees
-    plt.plot(noisePercLevels, mean20TreeValF1, color = 'lightgreen', ls = '-', label = "20 Trees")
+    plt.plot(noisePercLevels, mean20TreeValF1, color = 'lightgreen', ls = '-', label = "20")
     # 60 Trees
-    plt.plot(noisePercLevels, mean60TreeValF1, color = 'lawngreen', ls = '-', label = "60 Trees")
+    plt.plot(noisePercLevels, mean60TreeValF1, color = 'lawngreen', ls = '-', label = "60")
     # 100 Trees 
-    plt.plot(noisePercLevels, mean100TreeValF1, color = 'limegreen', ls = '-', label = "100 Trees")
+    plt.plot(noisePercLevels, mean100TreeValF1, color = 'limegreen', ls = '-', label = "100")
     # 200 Trees
-    plt.plot(noisePercLevels, mean200TreeValF1, color = 'mediumseagreen', ls = '-', label = "200 Trees")
+    plt.plot(noisePercLevels, mean200TreeValF1, color = 'mediumseagreen', ls = '-', label = "200")
     # 500 Trees
-    plt.plot(noisePercLevels, mean500TreeValF1, color = 'darkgreen', ls = '-', label = "500 Trees")
+    plt.plot(noisePercLevels, mean500TreeValF1, color = 'darkgreen', ls = '-', label = "500")
     
     plt.legend(title = "Number of Trees")
     plt.xlabel("Noise %")
     plt.ylabel("Average Test Accuracy %")
-    plt.suptitle("Tree Insualtion against Noise {} ".format(mlAlgoName) + r"$\bf{Validation \ F1 \ Score}$", fontsize=18)
+    plt.suptitle("Tree Insualtion against Noise Impact on {} ".format(mlAlgoName) + r"$\bf{Validation \ F1 \ Score}$", fontsize=18)
 
 
     #### Validation AUC Value Plot 
     plt.figure() # Instantiate a new figure 
 
     # 20 Trees
-    plt.plot(noisePercLevels, mean20TreeValAUC, color = 'lightgreen', ls = '-', label = "20 Trees")
+    plt.plot(noisePercLevels, mean20TreeValAUC, color = 'lightgreen', ls = '-', label = "20")
     # 60 Trees
-    plt.plot(noisePercLevels, mean60TreeValAUC, color = 'lawngreen', ls = '-', label = "60 Trees")
+    plt.plot(noisePercLevels, mean60TreeValAUC, color = 'lawngreen', ls = '-', label = "60")
     # 100 Trees 
-    plt.plot(noisePercLevels, mean100TreeValAUC, color = 'limegreen', ls = '-', label = "100 Trees")
+    plt.plot(noisePercLevels, mean100TreeValAUC, color = 'limegreen', ls = '-', label = "100")
     # 200 Trees
-    plt.plot(noisePercLevels, mean200TreeValAUC, color = 'mediumseagreen', ls = '-', label = "200 Trees")
+    plt.plot(noisePercLevels, mean200TreeValAUC, color = 'mediumseagreen', ls = '-', label = "200")
     # 500 Trees
-    plt.plot(noisePercLevels, mean500TreeValAUC, color = 'darkgreen', ls = '-', label = "500 Trees")
+    plt.plot(noisePercLevels, mean500TreeValAUC, color = 'darkgreen', ls = '-', label = "500")
     
     plt.legend(title = "Number of Trees")
     plt.xlabel("Noise %")
     plt.ylabel("Average Test Accuracy %")
-    plt.suptitle("Tree Insualtion against Noise {} ".format(mlAlgoName) + r"$\bf{Validation \ AUC}$", fontsize=18)
+    plt.suptitle("Tree Insualtion against Noise Impact on {} ".format(mlAlgoName) + r"$\bf{Validation \ AUC}$", fontsize=18)
 
 
 ############### Get Accuracys to see if increasing the number of trees provides insulation agasints impact of noise ###################
@@ -1544,8 +1611,4 @@ createTreesNoiseInsulationPlot(wpXgb20TResults, wpXgb60TResults, wpXgb100TResult
                                cCDXgb20TResults, cCDXgb60TResults, cCDXgb100TResults,
                                cCDXgb200TResults, cCDXgb500TResults,
                                NOISEPERCLEVELSMITIGATIONEXP, "XGBoost")
-
-a = [3,4,5,6,6,77,88]
-a.sort_values( ascending = False, inplace = True) 
-b = a[:3]
 
