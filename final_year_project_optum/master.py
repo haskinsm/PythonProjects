@@ -386,7 +386,7 @@ def createSingleNoiseEffectPlot(testAccuracy, valAccuracy, noisePercLevels, data
     plt.title("Note: Noise randomly inserted to binary target variable in training and test sets", fontsize=12)
     #plt.close() # Close current fig so nothing further will be overlayed on it 
     
-def createMlAlgorithmNoiseEffectPlots(wpResults, 
+def createMlAlgorithmByDatasetNoiseEffectPlots(wpResults, 
                                      cIResults,
                                      cCDResults, 
                                      noisePercLevels, mlAlgorithmName):
@@ -477,8 +477,59 @@ def createMlAlgorithmNoiseEffectPlots(wpResults,
     #plt.title("Note: Noise randomly inserted to binary target variable in training set", fontsize=12)
     
     
+def createAverageByAlgorithmNoiseEffectPlot(wpResults, cIResults, cCDResults,  noisePercLevels):
+    """
+    Function to generate one plot showing the average Test Acuuracy, and Val accuracy, AUC, F1 values
+
+    Parameters
+    ----------
+    wpResults : TYPE
+        DESCRIPTION.
+    cIResults : TYPE
+        DESCRIPTION.
+    cCDResults : TYPE
+        DESCRIPTION.
+    noisePercLevels : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
+    # Get mean accuracy for each ml algorithm
+    meanRfTestAccuracy, meanRfValAccuracy, meanRfValF1, meanRfValAUC = [], [], [], []
     
-def createMultipleNoiseEffectPlot(wpRfResults, wpXgbResults, wpDtResults, wpSvmResults,
+    # Get length of noise level percentages list (to ascertain how long each list in the results dicts are)
+    # Then iterate through each item in the lists and get the average value for each algorithm
+    for i in range( len(noisePercLevels) ): 
+        # Get mean Test accuracys for each algorithm 
+        meanRfTestAccuracy.append( (wpResults['TestAccuracy'][i] + cIResults['TestAccuracy'][i] + cCDResults['TestAccuracy'][i])/3)
+       
+        # Get mean Val accuracys for each algorithm 
+        meanRfValAccuracy.append( (wpResults['ValAccuracy'][i] + cIResults['ValAccuracy'][i] + cCDResults['ValAccuracy'][i])/3)
+       
+        # Get mean F1 Score for each algorithm 
+        meanRfValF1.append( (wpResults['ValF1'][i] + cIResults['ValF1'][i] + cCDResults['ValF1'][i])/3)
+       
+        # Get mean AUC for each algorithm 
+        meanRfValAUC.append( (wpResults['ValAUC'][i] + cIResults['ValAUC'][i] + cCDResults['ValAUC'][i])/3)
+    
+    # Create Plot showing average Test Accuracy, & Val accuracy, F1, AUC values
+    plt.figure()
+    
+    plt.plot(noisePercLevels, meanRfTestAccuracy, color = 'purple', ls = '-', label = "Test Accuracy")
+    plt.plot(noisePercLevels, meanRfValAccuracy, color = 'tomato', ls = '-', label = "Val Accuracy")
+    plt.plot(noisePercLevels, meanRfValF1, color = 'pink', ls = '-', label = "Val F1")
+    plt.plot(noisePercLevels, meanRfValAUC, color = 'cyan', ls = '-', label = "Val AUC")
+    
+    plt.legend()
+    plt.xlabel("Noise %")
+    plt.ylabel("Average Values")
+    #plt.suptitle("Noise Effect on " + r"$\bf{Validation \ AUC}$", fontsize=18)
+    #plt.title("Note: Noise randomly inserted to binary target variable in training set", fontsize=12)
+    
+def createAverageNoiseEffectPlot(wpRfResults, wpXgbResults, wpDtResults, wpSvmResults,
                                   cIRfResults, cIXgbResults, cIDtResults, cISvmResults,
                                   cCDRfResults, cCDXgbResults, cCDDtResults, cCDSvmResults,
                                   noisePercLevels):
@@ -670,53 +721,81 @@ cCDSvmNoiseResults = svmNoiseEffect(cCDData, NOISEPERCLEVELS)
 
 #############  Noise Effect for specific ml algorithm on multiple datasets ######
 #### rf
-createMlAlgorithmNoiseEffectPlots(wpRfNoiseResults,
+createMlAlgorithmByDatasetNoiseEffectPlots(wpRfNoiseResults,
                                  cIRfNoiseResults,
                                  cCDRfNoiseResults,
                                  NOISEPERCLEVELS, "Random Forest")
 #### xgb 
-createMlAlgorithmNoiseEffectPlots(wpXgbNoiseResults,
+createMlAlgorithmByDatasetNoiseEffectPlots(wpXgbNoiseResults,
                                  cIXgbNoiseResults,
                                  cCDXgbNoiseResults,
                                  NOISEPERCLEVELS, "XGBoost")
 #### dt 
-createMlAlgorithmNoiseEffectPlots(wpDtNoiseResults,
+createMlAlgorithmByDatasetNoiseEffectPlots(wpDtNoiseResults,
                                  cIDtNoiseResults,
                                  cCDDtNoiseResults,
                                  NOISEPERCLEVELS, "Decison Tree")
 
 #### svm
-createMlAlgorithmNoiseEffectPlots(wpSvmNoiseResults,
+createMlAlgorithmByDatasetNoiseEffectPlots(wpSvmNoiseResults,
                                  cISvmNoiseResults,
                                  cCDSvmNoiseResults,
                                  NOISEPERCLEVELS, "Support Vector Machine")
 
 
-############## Average Ml Accuarcy for multiple datasets when noise is inserted #######
-createMultipleNoiseEffectPlot(wpRfNoiseResults, wpXgbNoiseResults, wpDtNoiseResults, wpSvmNoiseResults,
+############## Average perfromance measures of each ML algorithm for multiple datasets when noise is inserted #######
+createAverageNoiseEffectPlot(wpRfNoiseResults, wpXgbNoiseResults, wpDtNoiseResults, wpSvmNoiseResults,
                               cIRfNoiseResults, cIXgbNoiseResults, cIDtNoiseResults, cISvmNoiseResults,
                               cCDRfNoiseResults, cCDXgbNoiseResults, cCDDtNoiseResults, cCDSvmNoiseResults,
                               NOISEPERCLEVELS)
   
-      
+############# Average perfromance of specified ML algorithm for multiple datasets (All perfromance measures in one plot) ######
+# rf
+createAverageByAlgorithmNoiseEffectPlot(wpRfNoiseResults, cIRfNoiseResults, cCDRfNoiseResults, NOISEPERCLEVELS)
+# xgb
+createAverageByAlgorithmNoiseEffectPlot(wpXgbNoiseResults, cIXgbNoiseResults, cCDXgbNoiseResults, NOISEPERCLEVELS)
+# dt 
+createAverageByAlgorithmNoiseEffectPlot(wpDtNoiseResults, cIDtNoiseResults, cCDDtNoiseResults, NOISEPERCLEVELS)     
+# svm
+createAverageByAlgorithmNoiseEffectPlot(wpSvmNoiseResults, cISvmNoiseResults, cCDSvmNoiseResults, NOISEPERCLEVELS)
 
-"""
+
 ################## Saving results ###########
 ##### Due to long running time 
 # Store Results in Dict  
-dataDict = {"rfWpTest": wpRfTestAccuracy, "rfWpVal": wpRfValAccuracy, "xgbWpTest": wpXgbTestAccuracy, "xgbWpVal": wpXgbValAccuracy,
-            "dtWpTest": wpDtTestAccuracy, "dtWpVal": wpDtValAccuracy, "svmWpTest": wpSvmTestAccuracy, "svmWpVal": wpSvmValAccuracy,
-            "rfCiTest": cIRfTestAccuracy, "rfCiVal": cIRfValAccuracy, "xgbCiTest": cIXgbTestAccuracy, "xgbCiVal": cIXgbValAccuracy,
-            "dtCiTest": cIDtTestAccuracy, "dtCiVal": cIDtValAccuracy, "svmCiTest": cISvmTestAccuracy, "svmCiVal": cISvmValAccuracy,
-            "rfCCdTest": cCDRfTestAccuracy, "rfCCdVal": cCDRfValAccuracy, "xgbCCdTest": cCDXgbTestAccuracy, "xgbCCdVal": cCDXgbValAccuracy,
-            "dtCCdTest": cCDDtTestAccuracy, "dtCCdVal": cCDDtValAccuracy, "svmCCdTest": cCDSvmTestAccuracy, "svmCCdVal": cCDSvmValAccuracy}
+dataDict = {"rfWpTest": wpRfNoiseResults['TestAccuracy'], "rfWpVal": wpRfNoiseResults['ValAccuracy'],
+            "xgbWpTest": wpXgbNoiseResults['TestAccuracy'], "xgbWpVal": wpXgbNoiseResults['ValAccuracy'],
+            "dtWpTest": wpDtNoiseResults['TestAccuracy'], "dtWpVal": wpDtNoiseResults['ValAccuracy'], 
+            "svmWpTest": wpSvmNoiseResults['TestAccuracy'], "svmWpVal": wpSvmNoiseResults['ValAccuracy'],
+            "rfCiTest": cIRfNoiseResults['TestAccuracy'], "rfCiVal": cIRfNoiseResults['ValAccuracy'], 
+            "xgbCiTest": cIXgbNoiseResults['TestAccuracy'], "xgbCiVal": cIXgbNoiseResults['ValAccuracy'],
+            "dtCiTest": cIDtNoiseResults['TestAccuracy'], "dtCiVal": cIDtNoiseResults['ValAccuracy'], 
+            "svmCiTest": cISvmNoiseResults['TestAccuracy'], "svmCiVal": cISvmNoiseResults['ValAccuracy'],
+            "rfCCdTest": cCDRfNoiseResults['TestAccuracy'], "rfCCdVal": cCDRfNoiseResults['ValAccuracy'], 
+            "xgbCCdTest": cCDXgbNoiseResults['TestAccuracy'], "xgbCCdVal": cCDXgbNoiseResults['ValAccuracy'],
+            "dtCCdTest": cCDDtNoiseResults['TestAccuracy'], "dtCCdVal": cCDDtNoiseResults['ValAccuracy'], 
+            "svmCCdTest": cCDSvmNoiseResults['TestAccuracy'], "svmCCdVal": cCDSvmNoiseResults['ValAccuracy'],
+            
+            "rfWpValF1": wpRfNoiseResults['ValF1'], "rfWpValAUC": wpRfNoiseResults['ValAUC'],
+            "xgbWpValF1": wpXgbNoiseResults['ValF1'], "xgbWpValAUC": wpXgbNoiseResults['ValAUC'],
+            "dtWpValF1": wpDtNoiseResults['ValF1'], "dtWpValAUC": wpDtNoiseResults['ValAUC'], 
+            "svmWpValF1": wpSvmNoiseResults['ValF1'], "svmWpValAUC": wpSvmNoiseResults['ValAUC'],
+            "rfCiValF1": cIRfNoiseResults['ValF1'], "rfCiValAUC": cIRfNoiseResults['ValAUC'], 
+            "xgbCiValF1": cIXgbNoiseResults['ValF1'], "xgbCiValAUC": cIXgbNoiseResults['ValAUC'],
+            "dtCiValF1": cIDtNoiseResults['ValF1'], "dtCiValAUC": cIDtNoiseResults['ValAUC'], 
+            "svmCiValF1": cISvmNoiseResults['ValF1'], "svmCiValAUC": cISvmNoiseResults['ValAUC'],
+            "rfCCdValF1": cCDRfNoiseResults['ValF1'], "rfCCdValAUC": cCDRfNoiseResults['ValAUC'], 
+            "xgbCCdValF1": cCDXgbNoiseResults['ValF1'], "xgbCCdValAUC": cCDXgbNoiseResults['ValAUC'],
+            "dtCCdValF1": cCDDtNoiseResults['ValF1'], "dtCCdValAUC": cCDDtNoiseResults['ValAUC'], 
+            "svmCCdValF1": cCDSvmNoiseResults['ValF1'], "svmCCdValAUC": cCDSvmNoiseResults['ValAUC']}
+
 dataItems = dataDict.items()
 dataList = list(dataItems)
 df = pd.DataFrame(dataList)
-csvFilePath = os.path.join(CORRECTDIR, "\\accuracy_results.csv")
+csvFilePath = os.path.join(CORRECTDIR, "\\performance_results.csv")
 # Save results as a csv file
 df.to_csv(csvFilePath, header = True)
-"""
+
 
 
 ###################################################################################################################################
@@ -968,128 +1047,128 @@ def createCooksDistNoiseMitigationPlot(wpResults, cIResults, cCDResults, mlAlgor
     #### Create Test Accuracy Plot 
     plt.figure() 
     # 0%
-    plt.plot(noisePercLevels, mean0PercSwapTestAccuracy, color = 'lightgreen', ls = '-', label = "0%")
+    plt.plot(noisePercLevels, mean0PercSwapTestAccuracy, color = 'violet', ls = '-', label = "0%")
     """
     # 20%
     plt.plot(noisePercLevels, mean20PercSwapTestAccuracy, color = 'lawngreen', ls = '-', label = "20%")
     # 40% 
     plt.plot(noisePercLevels, mean40PercSwapTestAccuracy, color = 'limegreen', ls = '-', label = "40%")
     # 60%
-    plt.plot(noisePercLevels, mean60PercSwapTestAccuracy, color = 'mediumseagreen', ls = '-', label = "60%")
+    plt.plot(noisePercLevels, mean60PercSwapTestAccuracy, color = 'blueviolet', ls = '-', label = "60%")
     # 80%
     plt.plot(noisePercLevels, mean80PercSwapTestAccuracy, color = 'darkgreen', ls = '-', label = "80%")
     """
     # 50%
-    plt.plot(noisePercLevels, mean50PercSwapTestAccuracy, color = 'mediumseagreen', ls = '-', label = "50%")
+    plt.plot(noisePercLevels, mean50PercSwapTestAccuracy, color = 'blueviolet', ls = '-', label = "50%")
     # 100%
-    plt.plot(noisePercLevels, mean100PercSwapTestAccuracy, color = 'black', ls = '-', label = "100%")
+    plt.plot(noisePercLevels, mean100PercSwapTestAccuracy, color = 'navy', ls = '-', label = "100%")
     
     plt.legend(title = "Influential Points Swapped")
     plt.xlabel("Noise %")
     plt.ylabel("Average Test Accuracy %")
-    plt.suptitle("Using Cooks Distance to Mitigate Impact of Noise on \n{} ".format(mlAlgorithmName) + r"$\bf{Test \ Accuracy}$", fontsize=18)
+    #plt.suptitle("Using Cooks Distance to Mitigate Impact of Noise on \n{} ".format(mlAlgorithmName) + r"$\bf{Test \ Accuracy}$", fontsize=18)
     
     #### Create Val Accuracy Plot 
     plt.figure() 
     # 0%
-    plt.plot(noisePercLevels, mean0PercSwapValAccuracy, color = 'lightgreen', ls = '-', label = "0%")
+    plt.plot(noisePercLevels, mean0PercSwapValAccuracy, color = 'violet', ls = '-', label = "0%")
     """
     # 20%
     plt.plot(noisePercLevels, mean20PercSwapValAccuracy, color = 'lawngreen', ls = '-', label = "20%")
     # 40% 
     plt.plot(noisePercLevels, mean40PercSwapValAccuracy, color = 'limegreen', ls = '-', label = "40%")
     # 60%
-    plt.plot(noisePercLevels, mean60PercSwapValAccuracy, color = 'mediumseagreen', ls = '-', label = "60%")
+    plt.plot(noisePercLevels, mean60PercSwapValAccuracy, color = 'blueviolet', ls = '-', label = "60%")
     # 80%
     plt.plot(noisePercLevels, mean80PercSwapValAccuracy, color = 'darkgreen', ls = '-', label = "80%")
     """
     # 50%
-    plt.plot(noisePercLevels, mean50PercSwapValAccuracy, color = 'mediumseagreen', ls = '-', label = "50%")
+    plt.plot(noisePercLevels, mean50PercSwapValAccuracy, color = 'blueviolet', ls = '-', label = "50%")
     # 100%
-    plt.plot(noisePercLevels, mean100PercSwapValAccuracy, color = 'black', ls = '-', label = "100%")
+    plt.plot(noisePercLevels, mean100PercSwapValAccuracy, color = 'navy', ls = '-', label = "100%")
     
     plt.legend(title = "Influential Points Swapped")
     plt.xlabel("Noise %")
     plt.ylabel("Average Val Accuracy %")
-    plt.suptitle("Using Cooks Distance to Mitigate Impact of Noise on \n{} ".format(mlAlgorithmName) + r"$\bf{Validation \ Accuracy}$", fontsize=18)
+    #plt.suptitle("Using Cooks Distance to Mitigate Impact of Noise on \n{} ".format(mlAlgorithmName) + r"$\bf{Validation \ Accuracy}$", fontsize=18)
     
     
     #### Create Val F1 Score Plot 
     plt.figure() 
     # 0%
-    plt.plot(noisePercLevels, mean0PercSwapValF1, color = 'lightgreen', ls = '-', label = "0%")
+    plt.plot(noisePercLevels, mean0PercSwapValF1, color = 'violet', ls = '-', label = "0%")
     """
     # 20%
     plt.plot(noisePercLevels, mean20PercSwapValF1, color = 'lawngreen', ls = '-', label = "20%")
     # 40% 
     plt.plot(noisePercLevels, mean40PercSwapValF1, color = 'limegreen', ls = '-', label = "40%")
     # 60%
-    plt.plot(noisePercLevels, mean60PercSwapValF1, color = 'mediumseagreen', ls = '-', label = "60%")
+    plt.plot(noisePercLevels, mean60PercSwapValF1, color = 'blueviolet', ls = '-', label = "60%")
     # 80%
     plt.plot(noisePercLevels, mean80PercSwapValF1, color = 'darkgreen', ls = '-', label = "80%")
     """
     # 50%
-    plt.plot(noisePercLevels, mean50PercSwapValF1, color = 'mediumseagreen', ls = '-', label = "50%")
+    plt.plot(noisePercLevels, mean50PercSwapValF1, color = 'blueviolet', ls = '-', label = "50%")
     # 100%
-    plt.plot(noisePercLevels, mean100PercSwapValF1, color = 'black', ls = '-', label = "100%")
+    plt.plot(noisePercLevels, mean100PercSwapValF1, color = 'navy', ls = '-', label = "100%")
     
     plt.legend(title = "Influential Points Swapped")
     plt.xlabel("Noise %")
     plt.ylabel("Average F1 Score")
-    plt.suptitle("Using Cooks Distance to Mitigate Impact of Noise on \n{} ".format(mlAlgorithmName) + r"$\bf{Validation \ F1 \ Score}$", fontsize=18)
+    #plt.suptitle("Using Cooks Distance to Mitigate Impact of Noise on \n{} ".format(mlAlgorithmName) + r"$\bf{Validation \ F1 \ Score}$", fontsize=18)
     
     
     #### Create Val AUC Plot 
     plt.figure() 
     # 0%
-    plt.plot(noisePercLevels, mean0PercSwapValAUC, color = 'lightgreen', ls = '-', label = "0%")
+    plt.plot(noisePercLevels, mean0PercSwapValAUC, color = 'violet', ls = '-', label = "0%")
     """
     # 20%
     plt.plot(noisePercLevels, mean20PercSwapValAUC, color = 'lawngreen', ls = '-', label = "20%")
     # 40% 
     plt.plot(noisePercLevels, mean40PercSwapValAUC, color = 'limegreen', ls = '-', label = "40%")
     # 60%
-    plt.plot(noisePercLevels, mean60PercSwapValAUC, color = 'mediumseagreen', ls = '-', label = "60%")
+    plt.plot(noisePercLevels, mean60PercSwapValAUC, color = 'blueviolet', ls = '-', label = "60%")
     # 80%
     plt.plot(noisePercLevels, mean80PercSwapValAUC, color = 'darkgreen', ls = '-', label = "80%")
     """
     # 50%
-    plt.plot(noisePercLevels, mean50PercSwapValAUC, color = 'mediumseagreen', ls = '-', label = "50%")
+    plt.plot(noisePercLevels, mean50PercSwapValAUC, color = 'blueviolet', ls = '-', label = "50%")
     # 100%
-    plt.plot(noisePercLevels, mean100PercSwapValAUC, color = 'black', ls = '-', label = "100%")
+    plt.plot(noisePercLevels, mean100PercSwapValAUC, color = 'navy', ls = '-', label = "100%")
     
     plt.legend(title = "Influential Points Swapped")
     plt.xlabel("Noise %")
     plt.ylabel("Average AUC Score")
-    plt.suptitle("Using Cooks Distance to Mitigate Impact of Noise on \n{} ".format(mlAlgorithmName) + r"$\bf{Validation \ AUC}$", fontsize=18)
+    #plt.suptitle("Using Cooks Distance to Mitigate Impact of Noise on \n{} ".format(mlAlgorithmName) + r"$\bf{Validation \ AUC}$", fontsize=18)
     
     
     #### Create histogram of number of influential points swapped 
     plt.figure() 
     xPositions = np.arange(len(mean0PercSwapNumPointsSwapped))
     # 0% (Intuitively this will be 0, so it will appear like its missing)
-    #plt.bar(xPositions + 0.00, mean0PercSwapNumPointsSwapped, width = 0.25, color = 'lightgreen', ls = '-', label = "0%")
+    #plt.bar(xPositions + 0.00, mean0PercSwapNumPointsSwapped, width = 0.25, color = 'violet', ls = '-', label = "0%")
     """
     # 20%
     plt.bar(mean20PercSwapNumPointsSwapped, color = 'lawngreen', ls = '-', label = "20%")
     # 40% 
     plt.bar(mean40PercSwapNumPointsSwapped, color = 'limegreen', ls = '-', label = "40%")
     # 60%
-    plt.bar(mean60PercSwapNumPointsSwapped, color = 'mediumseagreen', ls = '-', label = "60%")
+    plt.bar(mean60PercSwapNumPointsSwapped, color = 'blueviolet', ls = '-', label = "60%")
     # 80%
     plt.bar(mean80PercSwapNumPointsSwapped, color = 'darkgreen', ls = '-', label = "80%")
     """
     # 50%
-    plt.bar(xPositions + 0.25, mean50PercSwapNumPointsSwapped, width = 0.25, color = 'mediumseagreen', ls = '-', label = "50%")
+    plt.bar(xPositions + 0.25, mean50PercSwapNumPointsSwapped, width = 0.25, color = 'blueviolet', ls = '-', label = "50%")
     # 100%
-    plt.bar(xPositions + 0.50, mean100PercSwapNumPointsSwapped, width = 0.25, color = 'black', ls = '-', label = "100%")
+    plt.bar(xPositions + 0.50, mean100PercSwapNumPointsSwapped, width = 0.25, color = 'navy', ls = '-', label = "100%")
     
     #plt.axis(noisePercLevels)
     plt.xticks(ticks = xPositions, labels = noisePercLevels)
     plt.legend(title = "Influential Points Swapped")
     plt.xlabel("Noise %")
     plt.ylabel("Number of points swapped")
-    plt.suptitle("Number of Influential Points Swapped from Training to Test set", fontsize=18)
+    #plt.suptitle("Number of Influential Points Swapped from Training to Test set", fontsize=18)
    
 
 
@@ -1146,7 +1225,6 @@ createCooksDistNoiseMitigationPlot(wpSvmNoiseMitigationResults, cISvmNoiseMitiga
 # dt
 createCooksDistNoiseMitigationPlot(wpDtNoiseMitigationResults, cIDtNoiseMitigationResults, 
                                    cCDDtNoiseMitigationResults, "Decision Tree", NOISEPERCLEVELSMITIGATIONEXP)
-
 
 
 
@@ -1432,7 +1510,7 @@ def createTreesNoiseInsulationPlot(wp20TResults, wp60TResults, wp100TResults,
     # 500 Trees
     plt.plot(noisePercLevels, mean500TreeTestAccuracy, color = 'darkgreen', ls = '-', label = "500")
     
-    plt.legend(title = "Number of Trees")
+    plt.legend(title = "Number of Estimators")
     plt.xlabel("Noise %")
     plt.ylabel("Average Test Accuracy %")
     plt.suptitle("Tree Insualtion against Noise Impact on {} ".format(mlAlgoName) + r"$\bf{Test \ Accuracy}$", fontsize=18)
@@ -1452,7 +1530,7 @@ def createTreesNoiseInsulationPlot(wp20TResults, wp60TResults, wp100TResults,
     # 500 Trees
     plt.plot(noisePercLevels, mean500TreeValAccuracy, color = 'darkgreen', ls = '-', label = "500")
     
-    plt.legend(title = "Number of Trees")
+    plt.legend(title = "Number of Estimators")
     plt.xlabel("Noise %")
     plt.ylabel("Average Val Accuracy %")
     plt.suptitle("Tree Insualtion against Noise Impact on {} ".format(mlAlgoName) + r"$\bf{Validation \ Accuracy}$", fontsize=18)
@@ -1472,10 +1550,10 @@ def createTreesNoiseInsulationPlot(wp20TResults, wp60TResults, wp100TResults,
     # 500 Trees
     plt.plot(noisePercLevels, mean500TreeValF1, color = 'darkgreen', ls = '-', label = "500")
     
-    plt.legend(title = "Number of Trees")
+    plt.legend(title = "Number of Estimators")
     plt.xlabel("Noise %")
-    plt.ylabel("Average Test Accuracy %")
-    plt.suptitle("Tree Insualtion against Noise Impact on {} ".format(mlAlgoName) + r"$\bf{Validation \ F1 \ Score}$", fontsize=18)
+    plt.ylabel("Average F1 Score")
+    #plt.suptitle("Tree Insualtion against Noise Impact on {} ".format(mlAlgoName) + r"$\bf{Validation \ F1 \ Score}$", fontsize=18)
 
 
     #### Validation AUC Value Plot 
@@ -1492,11 +1570,12 @@ def createTreesNoiseInsulationPlot(wp20TResults, wp60TResults, wp100TResults,
     # 500 Trees
     plt.plot(noisePercLevels, mean500TreeValAUC, color = 'darkgreen', ls = '-', label = "500")
     
-    plt.legend(title = "Number of Trees")
+    plt.legend(title = "Number of Estimators")
     plt.xlabel("Noise %")
-    plt.ylabel("Average Test Accuracy %")
-    plt.suptitle("Tree Insualtion against Noise Impact on {} ".format(mlAlgoName) + r"$\bf{Validation \ AUC}$", fontsize=18)
-
+    plt.ylabel("Average AUC Value")
+    #plt.suptitle("Tree Insualtion against Noise Impact on {} ".format(mlAlgoName) + r"$\bf{Validation \ AUC}$", fontsize=18)
+    
+    
 
 ############### Get Accuracys to see if increasing the number of trees provides insulation agasints impact of noise ###################
 ##### Constants
