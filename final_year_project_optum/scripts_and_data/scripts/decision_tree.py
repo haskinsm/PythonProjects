@@ -77,7 +77,10 @@ class Model():
         None.
 
         """
-        dtModel = DecisionTreeClassifier()
+        params = {
+            'min_samples_leaf': 100
+        }
+        dtModel = DecisionTreeClassifier(**params)
         self.dt = dtModel.fit(self.train.iloc[:,:-1], self.train.iloc[:,-1])
         
         ## Make predictions using the model now to prevent it being made several times  

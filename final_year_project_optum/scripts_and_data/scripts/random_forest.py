@@ -95,7 +95,7 @@ class Model():
             'min_samples_leaf': 100, # Too small a number will result in overfitting 
             'max_features' : 'sqrt', # Better than setting it as 0.2 due to size of datasets
             'verbose': 0 #suppresses all text while a value of 3 outputs the tree learning process at every iteration
-        }
+            }
         self.rfHelper = sklHelper.SklearnHelper(clf=RandomForestClassifier, params=rf_params)
         
         ### Create Numpy arrays of train, test and target dataframes to feed into model 
