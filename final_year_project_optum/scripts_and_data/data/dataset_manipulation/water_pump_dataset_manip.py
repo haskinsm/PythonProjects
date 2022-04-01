@@ -105,24 +105,6 @@ def stripMonthYear(row):
 data['month'], data['year'] = data.apply(lambda row: stripMonthYear(row), axis = 1, result_type = 'expand').T.values
 data.drop('date_recorded', axis = 1, inplace = True) 
 
-"""
-### Will prob remove this section 
-# The target variable contrains 3 levels:P functional, non-functional and needs repair 
-# I will create another variable called repair which will indicate if a water pump needs to be repaired
-# 0 will indicate no repair needed, 1 will indicate repair needed. I will give non-functional water pumps 
-# a repair value of 1 
-## Think I may have made this too influential on the outcome so may need to be changed*****************************************
-
-def repairLabels(row):
-    if row['status_group'] == 'functional':
-        return 0
-    if row['status_group'] == 'functional needs repair':
-        return 1
-    if row['status_group'] == 'non functional':
-        return 1
-    return 'Other'
-data['repair'] = data.apply(lambda row: repairLabels(row), axis = 1)
-"""
 
 def responseLabels(row):
     if row['status_group'] == 'non functional':
@@ -141,18 +123,14 @@ data = data[cols]
 
 
 
-######################### Convert categorical variables to be ordinal using OrdinalEncoder or nominal using OneHotEncoder ####################
-#### using get_dummies for Nominal data and OrdinalEncoder for ordianl data
-
+######################### Use get_dummies() to convert categorical data into dummy or indicator variables
 # While the variable quantity appears to be semi ordinal there is not enough information to warrent encoding
 # it as ordinal as it is unclear what order to put 'seasonal', 'unknown', 'dry', 'enough' , 'insufficient' in
 
+# Divide data 
 XNom = data.iloc[:, [4,5,6,8,9,11,12,13,14,15,16,17,18,19,20,21]].astype(str)
 XCont = data.iloc[:, [0,1,2,3,7,10,22,23]].astype(str)
 y = pd.DataFrame(data.iloc[:, -1].astype(str))
-
-#onehotEnc = preprocessing.OneHotEncoder()
-#C = pd.DataFrame(onehotEnc.fit_transform(C).toarray()) # No column names 
 
 XNomDumDf = pd.get_dummies(XNom, columns = XNom.columns)
 # Now merge everything back together to get the final encoded dataset

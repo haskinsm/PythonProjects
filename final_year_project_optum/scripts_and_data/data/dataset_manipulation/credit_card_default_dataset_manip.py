@@ -35,8 +35,7 @@ summary = data.describe()
 
 
 
-######################### Convert categorical variables to be ordinal using OrdinalEncoder or nominal using OneHotEncoder ####################
-#### using get_dummies for Nominal data and OrdinalEncoder for ordianl data
+######################### Use get_dummies() to convert categorical data into dummy or indicator variables
 
 # While the variable quantity appears to be semi ordinal there is not enough information to warrent encoding
 # it as ordinal as it is unclear what order to put 'seasonal', 'unknown', 'dry', 'enough' , 'insufficient' in
