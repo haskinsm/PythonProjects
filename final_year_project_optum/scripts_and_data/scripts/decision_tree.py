@@ -78,6 +78,7 @@ class Model():
 
         """
         params = {
+            'max_depth': 8,
             'min_samples_leaf': 100
         }
         dtModel = DecisionTreeClassifier(**params)
