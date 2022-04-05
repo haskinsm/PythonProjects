@@ -349,68 +349,26 @@ def svmNoiseEffect(dataRef, noisePercLevels):
     dtScriptRef = scripts_and_data.scripts.support_vector_machine
     return noiseEffect(dtScriptRef, dataRef, noisePercLevels)
 
-def createSingleNoiseEffectPlot(testAccuracy, valAccuracy, noisePercLevels, datasetName, algorithmName):
-    """
-    This is a simple plotting fucntion which plots the test and validation accuracy of a specific ML algorithm
-    appied to a specific dataset
-    
-    Note: This function does not keep dataset clours consitent, and any graphs generated from this will not be used
-    in my final report.
-
-    Parameters
-    ----------
-    testAccuracy : [float]
-        DESCRIPTION.
-    valAccuracy : [float]
-        DESCRIPTION.
-    noisePercLevels : [float]
-        DESCRIPTION. List of the percentages of noise that have been inserted into the test and training sets.
-        This should correspond to the test and val accuracy ranges of noise. 
-    datasetName : String
-        DESCRIPTION.
-    algorithmName : String
-        DESCRIPTION.
-
-    Returns
-    -------
-    None.
-
-    """
-    plt.figure() # Instantiate a new figure 
-    plt.plot(noisePercLevels, testAccuracy,'r--', label = "Test")
-    plt.plot(noisePercLevels, valAccuracy, 'g--', label = "Validation")
-    plt.legend()
-    plt.xlabel("Noise %")
-    plt.ylabel("Average Accuracy %")
-    plt.suptitle("Noise Effect on {} Accuracy for {}".format(algorithmName, datasetName), fontsize=18)
-    plt.title("Note: Noise randomly inserted to binary target variable in training and test sets", fontsize=12)
-    #plt.close() # Close current fig so nothing further will be overlayed on it 
     
 def createMlAlgorithmByDatasetNoiseEffectPlots(wpResults, 
                                      cIResults,
                                      cCDResults, 
                                      noisePercLevels, mlAlgorithmName):
     """
-    Function to generate a plot depicting how the accuracy of machine learning alrgorithm Random forests is
-    affected by adding noise to the target variable in the test and training sets for multiple datasets.  
+    Function to generate a plot depicting how the test accuracy, validation accuracy, F1, and Auc 
+    of a specified machine learning alrgorithm is affected by adding noise to the target variable 
+    in the test and training sets for multiple datasets.  
 
     Parameters
     ----------
-    wpTestAccuracy : [float]
-        DESCRIPTION. List of Test accuracys for waterpump dataset
-    wpValAccuracy : [float]
-        DESCRIPTION. List of Validation accuracys for waterpump dataset
-    ciTestAccuracy : [float]
-        DESCRIPTION. List of Test accuracys for Census Income dataset
-    ciValAccuracy : [float]
-        DESCRIPTION. List of Validation accuracys for Census Income dataset
-    cCDTestAccuracy : [float]
-        DESCRIPTION. List of Test accuracys for Credit Card Default dataset
-    cCDValAccuracy : [float]
-        DESCRIPTION. List of Validation accuracys for Credit Card Default dataset
-    noisePercLevels : []
-        DESCRIPTION. **Assumes that the noise increments is the same for all datasets**. List of noise levels which
-                     should correspond to the test and validation accuracys 
+    wpResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    cIResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    cCDResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    noisePercLevels : [float]
+        DESCRIPTION. List of noise percenatge levels. Should be the same length as values in dict of other arguments of this function.
     mlAlgorithmName : String
         DESCRIPTION. E.g. "Random Forest" or "XGBoost" or "Decsion Tree" or "Support Vector Machine". This 
         will only be used to insert the machine learning algorithm name into the title of the plot
@@ -418,20 +376,20 @@ def createMlAlgorithmByDatasetNoiseEffectPlots(wpResults,
 
     Returns
     -------
-    None.
+    None. (but outputs 4 graphs)
 
     """
     # Create Test Accuracy Plot 
     plt.figure()
     
     plt.plot(noisePercLevels, wpResults['TestAccuracy'], color = 'red', ls = '-', label = "WaterPump (Pump it Up)")
-    plt.plot(noisePercLevels, cIResults['TestAccuracy'], color = 'green', ls = '-', label = "Census Income Dataset")
-    plt.plot(noisePercLevels, cCDResults['TestAccuracy'], color = 'royalblue', ls ='-', label = "Credit Card Default Dataset")
+    plt.plot(noisePercLevels, cIResults['TestAccuracy'], color = 'green', ls = '-', label = "Census Income")
+    plt.plot(noisePercLevels, cCDResults['TestAccuracy'], color = 'royalblue', ls ='-', label = "Credit Card Default")
    
     plt.legend(title = "Dataset")
     plt.xlabel("Noise %")
     plt.ylabel("Average Test Accuracy %")
-    plt.suptitle("Noise Effect on {} ".format(mlAlgorithmName) + r"$\bf{Test \ Accuracy}$", fontsize=18)
+    #plt.suptitle("Noise Effect on {} ".format(mlAlgorithmName) + r"$\bf{Test \ Accuracy}$", fontsize=18)
     #plt.title("Note: Noise randomly inserted to binary target variable in training and test sets", fontsize=12)
     
     
@@ -445,7 +403,7 @@ def createMlAlgorithmByDatasetNoiseEffectPlots(wpResults,
     plt.legend(title = "Dataset")
     plt.xlabel("Noise %")
     plt.ylabel("Average Validation Accuracy %")
-    plt.suptitle("Noise Effect on {} ".format(mlAlgorithmName) + r"$\bf{Validation \ Accuracy}$", fontsize=18)
+    #plt.suptitle("Noise Effect on {} ".format(mlAlgorithmName) + r"$\bf{Validation \ Accuracy}$", fontsize=18)
     #plt.title("Note: Noise randomly inserted to binary target variable in training set", fontsize=12)
     
     
@@ -459,7 +417,7 @@ def createMlAlgorithmByDatasetNoiseEffectPlots(wpResults,
     plt.legend(title = "Dataset")
     plt.xlabel("Noise %")
     plt.ylabel("Average F1 Score")
-    plt.suptitle("Noise Effect on {} ".format(mlAlgorithmName) + r"$\bf{Validation \ F1 \ Score}$", fontsize=18)
+    #plt.suptitle("Noise Effect on {} ".format(mlAlgorithmName) + r"$\bf{Validation \ F1 \ Score}$", fontsize=18)
     #plt.title("Note: Noise randomly inserted to binary target variable in training set", fontsize=12)
     
     
@@ -473,7 +431,7 @@ def createMlAlgorithmByDatasetNoiseEffectPlots(wpResults,
     plt.legend(title = "Dataset")
     plt.xlabel("Noise %")
     plt.ylabel("Average AUC Value")
-    plt.suptitle("Noise Effect on {} ".format(mlAlgorithmName) + r"$\bf{Validation \ AUC}$", fontsize=18)
+    #plt.suptitle("Noise Effect on {} ".format(mlAlgorithmName) + r"$\bf{Validation \ AUC}$", fontsize=18)
     #plt.title("Note: Noise randomly inserted to binary target variable in training set", fontsize=12)
     
     
@@ -483,18 +441,18 @@ def createAverageByAlgorithmNoiseEffectPlot(wpResults, cIResults, cCDResults,  n
 
     Parameters
     ----------
-    wpResults : TYPE
-        DESCRIPTION.
-    cIResults : TYPE
-        DESCRIPTION.
-    cCDResults : TYPE
-        DESCRIPTION.
-    noisePercLevels : TYPE
-        DESCRIPTION.
+    wpResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    cIResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    cCDResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    noisePercLevels : [float]
+        DESCRIPTION. List of noise percenatge levels. Should be the same length as values in dict of other arguments of this function.
 
     Returns
     -------
-    None.
+    None. (but outputs 1 graph)
 
     """
     # Get mean accuracy for each ml algorithm
@@ -534,53 +492,45 @@ def createAverageNoiseEffectPlot(wpRfResults, wpXgbResults, wpDtResults, wpSvmRe
                                   cCDRfResults, cCDXgbResults, cCDDtResults, cCDSvmResults,
                                   noisePercLevels):
     """
-    Generate a matplotlib plot showcasing the noise effect on the average accuracy of Random Forest, 
-    XGBoost and decision tree models applied to 3 datasets. 
+    Generate a matplotlib plot showcasing the noise effect on the average test accuracy, validation accuracy, F1 and AUC 
+    performance measures of Random Forest, XGBoost, decision tree and linear support vector machine models applied to 3 datasets. 
 
     Parameters
     ----------
-    wpRfTestAccuracy : [float]
-        DESCRIPTION.
-    wpRfValAccuracy : [float]
-        DESCRIPTION.
-    wpXgbTestAccuracy : [float]
-        DESCRIPTION.
-    wpXgbValAccuracy : [float]
-        DESCRIPTION.
-    wpDtTestAccuracy : [float]
-        DESCRIPTION.
-    wpDtValAccuracy : [float]
-        DESCRIPTION.
-    cIRfTestAccuracy : [float]
-        DESCRIPTION.
-    cIRfValAccuracy : [float]
-        DESCRIPTION.
-    cIXgbTestAccuracy : [float]
-        DESCRIPTION.
-    cIXgbValAccuracy : [float]
-        DESCRIPTION.
-    cIDtTestAccuracy : [float]
-        DESCRIPTION.
-    cIDtValAccuracy : [float]
-        DESCRIPTION.
-    cCDRfTestAccuracy : [float]
-        DESCRIPTION.
-    cCDRfValAccuracy : [float]
-        DESCRIPTION.
-    cCDXgbTestAccuracy : [float]
-        DESCRIPTION.
-    cCDXgbValAccuracy : [float]
-        DESCRIPTION.
-    cCDDtTestAccuracy : [float]
-        DESCRIPTION.
-    cCDDtValAccuracy : [float]
-        DESCRIPTION.
+    wpRfResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    wpXgbResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    wpDtResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    wpSvmResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    cIRfResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    cIXgbResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    cIDtResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    cISvmResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+        wpRfResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    cCDRfResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    cCDXgbResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    cCDDtResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+    cCDSvmResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
+        wpRfResults : {[float], [float], [float], [float] }
+        DESCRIPTION. A dict containing the keys TestAccuracy, ValAccuracy, ValF1, ValAUC. Each value should be a list of values. 
     noisePercLevels : [float]
         DESCRIPTION.
 
     Returns
     -------
-    None.
+    None. (but outputs one graph)
 
     """
     
@@ -629,7 +579,7 @@ def createAverageNoiseEffectPlot(wpRfResults, wpXgbResults, wpDtResults, wpSvmRe
     plt.legend()
     plt.xlabel("Noise %")
     plt.ylabel("Average Test Accuracy %")
-    plt.suptitle("Noise Effect on Machine Learning Algortihms " + r"$\bf{Test \ Accuracy}$", fontsize=18)
+    #plt.suptitle("Noise Effect on Machine Learning Algortihms " + r"$\bf{Test \ Accuracy}$", fontsize=18)
     #plt.title("Note: Noise randomly inserted to binary target variable in training and test sets", fontsize=12)
     
     
@@ -644,7 +594,7 @@ def createAverageNoiseEffectPlot(wpRfResults, wpXgbResults, wpDtResults, wpSvmRe
     plt.legend()
     plt.xlabel("Noise %")
     plt.ylabel("Average Validation Accuracy %")
-    plt.suptitle("Noise Effect on Machine Learning Algortihms " + r"$\bf{Validation \ Accuracy}$", fontsize=18)
+    #plt.suptitle("Noise Effect on Machine Learning Algortihms " + r"$\bf{Validation \ Accuracy}$", fontsize=18)
     #plt.title("Note: Noise randomly inserted to binary target variable in training set", fontsize=12)
     
     
@@ -659,7 +609,7 @@ def createAverageNoiseEffectPlot(wpRfResults, wpXgbResults, wpDtResults, wpSvmRe
     plt.legend()
     plt.xlabel("Noise %")
     plt.ylabel("Average F1 Score")
-    plt.suptitle("Noise Effect on Machine Learning Algortihms " + r"$\bf{Validation \ F1 \ Score}$", fontsize=18)
+    #plt.suptitle("Noise Effect on Machine Learning Algortihms " + r"$\bf{Validation \ F1 \ Score}$", fontsize=18)
     #plt.title("Note: Noise randomly inserted to binary target variable in training set", fontsize=12)
     
     
@@ -674,7 +624,7 @@ def createAverageNoiseEffectPlot(wpRfResults, wpXgbResults, wpDtResults, wpSvmRe
     plt.legend()
     plt.xlabel("Noise %")
     plt.ylabel("Average AUC Value")
-    plt.suptitle("Noise Effect on Machine Learning Algortihms " + r"$\bf{Validation \ AUC}$", fontsize=18)
+    #plt.suptitle("Noise Effect on Machine Learning Algortihms " + r"$\bf{Validation \ AUC}$", fontsize=18)
     #plt.title("Note: Noise randomly inserted to binary target variable in training set", fontsize=12)
     
 
@@ -748,6 +698,9 @@ createAverageNoiseEffectPlot(wpRfNoiseResults, wpXgbNoiseResults, wpDtNoiseResul
                               cIRfNoiseResults, cIXgbNoiseResults, cIDtNoiseResults, cISvmNoiseResults,
                               cCDRfNoiseResults, cCDXgbNoiseResults, cCDDtNoiseResults, cCDSvmNoiseResults,
                               NOISEPERCLEVELS)
+
+
+ 
   
 ############# Average perfromance of specified ML algorithm for multiple datasets (All perfromance measures in one plot) ######
 # rf
@@ -1580,7 +1533,7 @@ def createTreesNoiseInsulationPlot(wp20TResults, wp60TResults, wp100TResults,
 ############### Get Accuracys to see if increasing the number of trees provides insulation agasints impact of noise ###################
 ##### Constants
 ## Create the noiseLevelPerc list for the % of noise to insert and for subsequent graphing purposes.
-NOISEPERCLEVELSMITIGATIONEXP = list(range(0, 51, 1)) # 0,1,2,....,50
+NOISEPERCLEVELSMITIGATIONEXP = list(range(0, 1, 1)) # 0,1,2,....,50
 # To change simply change range in the format range(startAt, stopBefore, incrementBy)
 
 
@@ -1682,7 +1635,7 @@ cCDXgb200TResults = xgbNoiseEffect(cCDData, NOISEPERCLEVELSMITIGATIONEXP, 200)
 cCDXgb500TResults = xgbNoiseEffect(cCDData, NOISEPERCLEVELSMITIGATIONEXP, 500)
 
 
-## Generate plot
+## Generate plot 
 createTreesNoiseInsulationPlot(wpXgb20TResults, wpXgb60TResults, wpXgb100TResults,
                                wpXgb200TResults, wpXgb500TResults,
                                cIXgb20TResults, cIXgb60TResults, cIXgb100TResults,
